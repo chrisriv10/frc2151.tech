@@ -1,0 +1,63 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+  <title>News Admin | FRC 2151</title>
+  <link rel="icon" type="image/png" href="assets/css/images/2151Logo.png" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="stylesheet" href="assets/css/main.css?v=48" />
+  <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+</head>
+<body class="is-preload admin-page">
+  <main id="admin-app" class="admin-shell">
+    <header class="admin-header">
+      <a href="index.html" class="admin-brand"><img src="assets/css/images/2151Logo.png" alt="FRC Team 2151 Monty Pythons team logo"><span><strong>FRC 2151</strong><small>News CMS</small></span></a>
+      <button type="button" class="button" data-action="logout" hidden>Log Out</button>
+    </header>
+
+    <p class="admin-status" data-admin-status role="status" aria-live="polite">Checking news service…</p>
+
+    <section class="admin-panel admin-login-panel" data-auth-panel aria-labelledby="admin-login-title">
+      <h1 id="admin-login-title">News Admin</h1>
+      <p>Sign in with an authorized team account to create and manage published news.</p>
+      <button type="button" class="button primary admin-google-button" data-action="google-login">Continue with Google</button>
+      <p class="admin-help">Only accounts listed in the Firebase <code>admins</code> collection can access the dashboard.</p>
+    </section>
+
+    <section class="admin-dashboard" data-dashboard hidden aria-labelledby="dashboard-title">
+      <div class="admin-dashboard-heading">
+        <div><h2 id="dashboard-title">News Dashboard</h2><p>Manage drafts and published team updates.</p></div>
+        <button type="button" class="button primary" data-action="new-post">New Post</button>
+      </div>
+      <div class="admin-post-list" data-post-list aria-live="polite"></div>
+    </section>
+
+    <section class="admin-panel admin-editor" data-editor hidden aria-labelledby="editor-title">
+      <div class="admin-editor-heading"><h2 id="editor-title">New Post</h2><button type="button" class="button" data-action="close-editor">Back to Dashboard</button></div>
+      <form data-post-form novalidate>
+        <input type="hidden" name="postId">
+        <div class="admin-form-grid">
+          <div class="field"><label for="post-title">Title</label><input id="post-title" name="title" type="text" maxlength="160" required></div>
+          <div class="field"><label for="post-slug">Slug</label><input id="post-slug" name="slug" type="text" maxlength="160" pattern="[A-Za-z0-9-]+" required><small>Used for organization; the article URL uses its stable post ID.</small></div>
+          <div class="field"><label for="post-author">Author</label><input id="post-author" name="author" type="text" maxlength="100" placeholder="Monty Pythons"></div>
+          <div class="field admin-form-wide"><label for="post-excerpt">Excerpt / short description</label><textarea id="post-excerpt" name="excerpt" rows="3" maxlength="320"></textarea></div>
+          <div class="field admin-form-wide"><label for="post-cover">Featured image</label><input id="post-cover" name="coverImage" type="file" accept="image/jpeg,image/png,image/webp,image/gif"><small>Optional. Images must be 10 MB or smaller.</small><div class="admin-file-preview" data-cover-preview></div></div>
+        </div>
+
+        <div class="field admin-body-field"><label for="post-body">Article body (Markdown)</label>
+          <div class="markdown-toolbar" role="toolbar" aria-label="Markdown formatting tools">
+            <button type="button" class="button small" data-markdown="**bold**">Bold</button><button type="button" class="button small" data-markdown="*italic*">Italic</button><button type="button" class="button small" data-markdown="# Heading">Heading</button><button type="button" class="button small" data-markdown="- List item">Bullet list</button><button type="button" class="button small" data-markdown="> Quote">Quote</button><button type="button" class="button small" data-action="toggle-preview" aria-pressed="false">Preview</button>
+          </div>
+          <textarea id="post-body" name="bodyMarkdown" rows="16" required placeholder="Share a team update in Markdown…"></textarea>
+          <div class="admin-editor-preview news-article-body" data-editor-preview hidden aria-label="Markdown preview"></div>
+        </div>
+
+        <div class="field admin-body-image-field"><label for="post-body-image">Add an image to the article</label><input id="post-body-image" type="file" accept="image/jpeg,image/png,image/webp,image/gif"><progress data-upload-progress max="100" value="0" hidden></progress><small data-upload-status role="status" aria-live="polite">Choose an image to upload it to this post.</small></div>
+        <div class="admin-form-actions"><button type="button" class="button" data-action="save-draft">Save Draft</button><button type="button" class="button primary" data-action="publish">Publish</button><button type="button" class="button" data-action="unpublish" hidden>Return to Draft</button><span class="admin-save-status" data-save-status role="status" aria-live="polite"></span></div>
+      </form>
+    </section>
+  </main>
+  <script type="module" src="assets/js/admin.js?v=1"></script>
+</body>
+</html>

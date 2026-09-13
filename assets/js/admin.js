@@ -1,0 +1,349 @@
+import { firebaseConfigured, getFirebase } from './firebase-config.js';
+import { renderMarkdown, safeImageUrl } from './markdown.js';
+import { formatPublishedDate, timestampToDate } from './news.js';
+
+const authPanel = document.querySelector('[data-auth-panel]');
+const dashboard = document.querySelector('[data-dashboard]');
+const editor = document.querySelector('[data-editor]');
+const status = document.querySelector('[data-admin-status]');
+const postList = document.querySelector('[data-post-list]');
+const form = document.querySelector('[data-post-form]');
+const saveStatus = document.querySelector('[data-save-status]');
+const coverPreview = document.querySelector('[data-cover-preview]');
+const preview = document.querySelector('[data-editor-preview]');
+const uploadProgress = document.querySelector('[data-upload-progress]');
+const uploadStatus = document.querySelector('[data-upload-status]');
+
+const state = { firebase: null, user: null, currentPost: null, posts: [] };
+
+function setStatus(message, kind = '') {
+  status.textContent = message;
+  status.className = `admin-status ${kind ? `is-${kind}` : ''}`;
+}
+
+function setSaveStatus(message, kind = '') {
+  saveStatus.textContent = message;
+  saveStatus.className = `admin-save-status ${kind ? `is-${kind}` : ''}`;
+}
+
+function show(element, visible) { element.hidden = !visible; }
+
+function slugify(value) {
+  return value.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-').replace(/^-|-$/g, '').slice(0, 160) || 'team-update';
+}
+
+function fileName(value) {
+  return value.toLowerCase().replace(/[^a-z0-9._-]/g, '-').replace(/-+/g, '-').slice(-90) || 'image';
+}
+
+function dateLabel(value) {
+  const date = timestampToDate(value);
+  return date ? formatPublishedDate(date) : 'Not set';
+}
+
+function renderCoverPreview(url, file) {
+  coverPreview.replaceChildren();
+  const source = file ? URL.createObjectURL(file) : safeImageUrl(url);
+  if (!source) return;
+  const image = document.createElement('img');
+  image.src = source;
+  image.alt = 'Featured image preview';
+  image.loading = 'lazy';
+  coverPreview.append(image);
+}
+
+function resetEditor() {
+  form.reset();
+  form.elements.postId.value = '';
+  state.currentPost = null;
+  document.querySelector('#editor-title').textContent = 'New Post';
+  document.querySelector('[data-action="unpublish"]').hidden = true;
+  coverPreview.replaceChildren();
+  preview.replaceChildren();
+  preview.hidden = true;
+  document.querySelector('[data-action="toggle-preview"]').setAttribute('aria-pressed', 'false');
+  setSaveStatus('');
+}
+
+function openEditor(post = null) {
+  state.currentPost = post;
+  show(dashboard, false);
+  show(editor, true);
+  if (!post) {
+    resetEditor();
+    return;
+  }
+  document.querySelector('#editor-title').textContent = 'Edit Post';
+  form.elements.postId.value = post.id;
+  form.elements.title.value = post.title || '';
+  form.elements.slug.value = post.slug || '';
+  form.elements.author.value = post.author || '';
+  form.elements.excerpt.value = post.excerpt || '';
+  form.elements.bodyMarkdown.value = post.bodyMarkdown || '';
+  document.querySelector('[data-action="unpublish"]').hidden = post.status !== 'published';
+  renderCoverPreview(post.coverImageUrl, null);
+  setSaveStatus('');
+}
+
+function closeEditor() {
+  show(editor, false);
+  show(dashboard, true);
+  resetEditor();
+}
+
+function renderPostList() {
+  postList.replaceChildren();
+  if (!state.posts.length) {
+    const empty = document.createElement('div');
+    empty.className = 'admin-empty';
+    empty.textContent = 'No posts yet. Create the first team update.';
+    postList.append(empty);
+    return;
+  }
+  state.posts.forEach((post) => {
+    const row = document.createElement('article');
+    row.className = 'admin-post-row';
+    const details = document.createElement('div');
+    details.className = 'admin-post-details';
+    const title = document.createElement('h2');
+    title.textContent = post.title || 'Untitled post';
+    const meta = document.createElement('p');
+    meta.className = 'admin-post-meta';
+    const badge = document.createElement('span');
+    badge.className = `status-badge status-${post.status === 'published' ? 'published' : 'draft'}`;
+    badge.textContent = post.status === 'published' ? 'Published' : 'Draft';
+    meta.append(badge, document.createTextNode(` Updated ${dateLabel(post.updatedAt)}`));
+    if (post.status === 'published') meta.append(document.createTextNode(` · Published ${dateLabel(post.publishedAt)}`));
+    details.append(title, meta);
+    const actions = document.createElement('div');
+    actions.className = 'admin-post-actions';
+    const edit = document.createElement('button');
+    edit.type = 'button'; edit.className = 'button small'; edit.textContent = 'Edit'; edit.dataset.editId = post.id;
+    actions.append(edit);
+    if (post.status === 'published') {
+      const view = document.createElement('a');
+      view.className = 'button small'; view.href = `post.html?id=${encodeURIComponent(post.id)}`; view.target = '_blank'; view.rel = 'noopener'; view.textContent = 'Preview';
+      actions.append(view);
+    }
+    const remove = document.createElement('button');
+    remove.type = 'button'; remove.className = 'button small danger'; remove.textContent = 'Delete'; remove.dataset.deleteId = post.id;
+    actions.append(remove);
+    row.append(details, actions);
+    postList.append(row);
+  });
+}
+
+async function loadPosts() {
+  const { collection, getDocs, orderBy, query } = state.firebase.firestoreSdk;
+  try {
+    const snapshot = await getDocs(query(collection(state.firebase.db, 'posts'), orderBy('updatedAt', 'desc')));
+    state.posts = snapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+    renderPostList();
+  } catch (error) {
+    console.error('Unable to load admin posts.', error);
+    postList.replaceChildren();
+    const message = document.createElement('p');
+    message.className = 'admin-error';
+    message.textContent = 'Posts could not be loaded. Check your Firebase connection and indexes.';
+    postList.append(message);
+  }
+}
+
+function uploadFile(file, path) {
+  return new Promise((resolve, reject) => {
+    const { ref, uploadBytesResumable, getDownloadURL } = state.firebase.storageSdk;
+    const task = uploadBytesResumable(ref(state.firebase.storage, path), file, { contentType: file.type, cacheControl: 'public,max-age=31536000' });
+    uploadProgress.hidden = false;
+    uploadProgress.value = 0;
+    task.on('state_changed', (snapshot) => {
+      uploadProgress.value = Math.round(snapshot.bytesTransferred / snapshot.totalBytes * 100);
+      uploadStatus.textContent = `Uploading image… ${uploadProgress.value}%`;
+    }, reject, async () => {
+      try { resolve(await getDownloadURL(task.snapshot.ref)); } catch (error) { reject(error); }
+    });
+  }).finally(() => {
+    uploadProgress.hidden = true;
+    uploadProgress.value = 0;
+  });
+}
+
+function validImage(file) {
+  const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  if (!file) return 'Choose an image first.';
+  if (!allowed.includes(file.type)) return 'Use a JPG, PNG, WebP, or GIF image.';
+  if (file.size > 10 * 1024 * 1024) return 'Images must be 10 MB or smaller.';
+  return '';
+}
+
+async function savePost(desiredStatus) {
+  if (!form.reportValidity()) return;
+  if (!state.firebase || !state.user) { setSaveStatus('You must be signed in to save a post.', 'error'); return; }
+  const values = Object.fromEntries(new FormData(form));
+  const title = values.title.trim();
+  const bodyMarkdown = values.bodyMarkdown.trim();
+  if (!title || !bodyMarkdown) { setSaveStatus('Add a title and article body before saving.', 'error'); return; }
+  const { collection, doc, serverTimestamp, setDoc } = state.firebase.firestoreSdk;
+  const postId = values.postId || doc(collection(state.firebase.db, 'posts')).id;
+  const previous = state.currentPost || {};
+  const coverFile = form.elements.coverImage.files[0];
+  let coverImageUrl = previous.coverImageUrl || null;
+  let coverImagePath = previous.coverImagePath || null;
+  const imagePaths = Array.isArray(previous.imagePaths) ? [...previous.imagePaths] : [];
+  try {
+    setSaveStatus(desiredStatus === 'published' ? 'Publishing…' : 'Saving draft…');
+    if (coverFile) {
+      const imageError = validImage(coverFile);
+      if (imageError) { setSaveStatus(imageError, 'error'); return; }
+      coverImagePath = `news/${postId}/cover-${Date.now()}-${fileName(coverFile.name)}`;
+      coverImageUrl = await uploadFile(coverFile, coverImagePath);
+      if (!imagePaths.includes(coverImagePath)) imagePaths.push(coverImagePath);
+    }
+    const payload = {
+      title, slug: (values.slug.trim() || slugify(title)), author: values.author.trim(), excerpt: values.excerpt.trim(), bodyMarkdown,
+      coverImageUrl, coverImagePath, imagePaths, status: desiredStatus,
+      updatedAt: serverTimestamp(), updatedBy: state.user.uid,
+      createdBy: previous.createdBy || state.user.uid,
+      publishedAt: desiredStatus === 'published' ? (previous.publishedAt || serverTimestamp()) : null
+    };
+    if (!previous.id) payload.createdAt = serverTimestamp();
+    await setDoc(doc(state.firebase.db, 'posts', postId), payload, { merge: true });
+    state.currentPost = { ...previous, ...payload, id: postId, publishedAt: desiredStatus === 'published' ? (previous.publishedAt || new Date()) : null };
+    form.elements.postId.value = postId;
+    document.querySelector('[data-action="unpublish"]').hidden = desiredStatus !== 'published';
+    setSaveStatus(desiredStatus === 'published' ? 'Published successfully.' : 'Draft saved.', 'success');
+    await loadPosts();
+  } catch (error) {
+    console.error('Unable to save news post.', error);
+    setSaveStatus('The post could not be saved. Please try again.', 'error');
+  }
+}
+
+async function deletePost(post) {
+  if (!window.confirm(`Delete “${post.title || 'Untitled post'}”? This cannot be undone.`)) return;
+  try {
+    const { deleteDoc, doc } = state.firebase.firestoreSdk;
+    await deleteDoc(doc(state.firebase.db, 'posts', post.id));
+    const paths = Array.isArray(post.imagePaths) ? post.imagePaths : [post.coverImagePath];
+    for (const path of paths.filter(Boolean)) {
+      try { await state.firebase.storageSdk.deleteObject(state.firebase.storageSdk.ref(state.firebase.storage, path)); } catch (error) { console.warn('Image cleanup skipped.', error); }
+    }
+    setStatus('Post deleted.', 'success');
+    await loadPosts();
+  } catch (error) {
+    console.error('Unable to delete post.', error);
+    setStatus('The post could not be deleted.', 'error');
+  }
+}
+
+function insertMarkdown(value) {
+  const textarea = form.elements.bodyMarkdown;
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const selected = textarea.value.slice(start, end) || 'text';
+  const replacement = value.replace(/bold|italic|Heading|List item|Quote|text/g, selected);
+  textarea.setRangeText(replacement, start, end, 'end');
+  textarea.focus();
+  if (!preview.hidden) renderMarkdown(preview, textarea.value);
+}
+
+async function initialize() {
+  if (!firebaseConfigured) {
+    setStatus('News CMS is not configured yet. Add the Firebase web config to enable admin access.', 'warning');
+    document.querySelector('[data-action="google-login"]').disabled = true;
+    return;
+  }
+  try {
+    state.firebase = await getFirebase();
+    const { onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider } = state.firebase.authSdk;
+    document.querySelector('[data-action="google-login"]').addEventListener('click', async () => {
+      try {
+        setStatus('Opening secure sign-in…');
+        await signInWithPopup(state.firebase.auth, new GoogleAuthProvider());
+      } catch (error) {
+        console.error('Admin sign-in failed.', error);
+        setStatus('Sign-in was not completed. Please try again.', 'error');
+      }
+    });
+    document.querySelector('[data-action="logout"]').addEventListener('click', () => signOut(state.firebase.auth));
+    onAuthStateChanged(state.firebase.auth, async (user) => {
+      state.user = user;
+      if (!user) {
+        show(authPanel, true); show(dashboard, false); show(editor, false);
+        document.querySelector('[data-action="logout"]').hidden = true;
+        setStatus('Sign in to manage team news.');
+        return;
+      }
+      try {
+        const { doc, getDoc } = state.firebase.firestoreSdk;
+        const adminDoc = await getDoc(doc(state.firebase.db, 'admins', user.uid));
+        if (!adminDoc.exists()) {
+          setStatus('This account is not authorized for News Admin access.', 'error');
+          await signOut(state.firebase.auth);
+          return;
+        }
+        show(authPanel, false); show(dashboard, true); show(editor, false);
+        document.querySelector('[data-action="logout"]').hidden = false;
+        setStatus(`Signed in as ${user.email || user.displayName || 'authorized admin'}.`, 'success');
+        await loadPosts();
+      } catch (error) {
+        console.error('Admin authorization check failed.', error);
+        setStatus('Authorization could not be verified. Please try again.', 'error');
+      }
+    });
+  } catch (error) {
+    console.error('Firebase failed to initialize.', error);
+    setStatus('The news service is temporarily unavailable.', 'error');
+  }
+}
+
+document.querySelector('[data-action="new-post"]').addEventListener('click', () => openEditor());
+document.querySelector('[data-action="close-editor"]').addEventListener('click', closeEditor);
+document.querySelector('[data-action="save-draft"]').addEventListener('click', () => savePost('draft'));
+document.querySelector('[data-action="publish"]').addEventListener('click', () => savePost('published'));
+document.querySelector('[data-action="unpublish"]').addEventListener('click', () => savePost('draft'));
+document.querySelector('#post-title').addEventListener('input', (event) => {
+  if (!form.elements.postId.value || !form.elements.slug.value) form.elements.slug.value = slugify(event.target.value);
+});
+document.querySelector('[data-action="toggle-preview"]').addEventListener('click', (event) => {
+  const isHidden = preview.hidden;
+  if (isHidden) renderMarkdown(preview, form.elements.bodyMarkdown.value);
+  preview.hidden = !isHidden;
+  event.currentTarget.setAttribute('aria-pressed', String(isHidden));
+});
+document.querySelectorAll('[data-markdown]').forEach((button) => button.addEventListener('click', () => insertMarkdown(button.dataset.markdown)));
+form.elements.coverImage.addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  const error = file && validImage(file);
+  if (error) { setSaveStatus(error, 'error'); event.target.value = ''; coverPreview.replaceChildren(); return; }
+  renderCoverPreview('', file);
+});
+document.querySelector('#post-body-image').addEventListener('change', async (event) => {
+  const file = event.target.files[0];
+  event.target.value = '';
+  const error = validImage(file);
+  if (error) { uploadStatus.textContent = error; return; }
+  const postId = form.elements.postId.value;
+  if (!postId) { uploadStatus.textContent = 'Save a draft first, then add body images.'; return; }
+  try {
+    const path = `news/${postId}/body-${Date.now()}-${fileName(file.name)}`;
+    const url = await uploadFile(file, path);
+    if (!state.currentPost.imagePaths) state.currentPost.imagePaths = [];
+    state.currentPost.imagePaths.push(path);
+    form.elements.bodyMarkdown.value += `${form.elements.bodyMarkdown.value.trim() ? '\n\n' : ''}![${file.name.replace(/\.[^.]+$/, '')}](${url})`;
+    uploadStatus.textContent = 'Image uploaded and added to the article. Save the post to keep the change.';
+  } catch (error) {
+    console.error('Body image upload failed.', error);
+    uploadStatus.textContent = 'Image upload failed. Please try again.';
+  }
+});
+postList.addEventListener('click', (event) => {
+  const editId = event.target.dataset.editId;
+  const deleteId = event.target.dataset.deleteId;
+  if (editId) openEditor(state.posts.find((post) => post.id === editId));
+  if (deleteId) {
+    const post = state.posts.find((item) => item.id === deleteId);
+    if (post) deletePost(post);
+  }
+});
+
+initialize();

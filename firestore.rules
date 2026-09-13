@@ -1,0 +1,55 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function validPost() {
+      return request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 160
+        && request.resource.data.slug is string
+        && request.resource.data.slug.size() > 0
+        && request.resource.data.slug.size() <= 160
+        && request.resource.data.excerpt is string
+        && request.resource.data.excerpt.size() <= 320
+        && request.resource.data.bodyMarkdown is string
+        && request.resource.data.bodyMarkdown.size() <= 200000
+        && request.resource.data.author is string
+        && request.resource.data.author.size() <= 100
+        && (request.resource.data.coverImageUrl == null || request.resource.data.coverImageUrl is string)
+        && (request.resource.data.coverImagePath == null || request.resource.data.coverImagePath is string)
+        && request.resource.data.status in ['draft', 'published']
+        && ((request.resource.data.status == 'draft' && request.resource.data.publishedAt == null)
+          || (request.resource.data.status == 'published' && request.resource.data.publishedAt is timestamp))
+        && request.resource.data.createdBy is string
+        && request.resource.data.updatedBy is string
+        && request.resource.data.imagePaths is list;
+    }
+
+    // Admin documents are created manually in the Firebase console or by a
+    // trusted server process. A signed-in admin may only read their own entry.
+    match /admins/{uid} {
+      // A signed-in account may check its own allowlist entry. Post access
+      // and all writes still require the isAdmin() check below.
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /posts/{postId} {
+      allow read: if isAdmin() || resource.data.status == 'published';
+      allow create: if isAdmin()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.updatedBy == request.auth.uid
+        && validPost();
+      allow update: if isAdmin()
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.updatedBy == request.auth.uid
+        && validPost();
+      allow delete: if isAdmin();
+    }
+  }
+}

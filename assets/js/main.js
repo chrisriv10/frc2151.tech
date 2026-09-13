@@ -217,12 +217,14 @@
 		});
 
 	// Replay section animations when sidebar links jump to them.
-		$('a[href="#one"], a[href="#three"]').on('click', function() {
+	$('a[href="#one"], a[href="#news"], a[href="#three"]').on('click', function() {
 
 			var $target;
 
 			if ($(this).attr('href') == '#one')
 				$target = $('#one.spotlights > section');
+			else if ($(this).attr('href') == '#news')
+				$target = $('#news.wrapper.fade-up');
 			else
 				$target = $('#three.wrapper.fade-up');
 
