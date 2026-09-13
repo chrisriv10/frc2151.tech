@@ -5773,6 +5773,7 @@ img {
 
 /* Admin CMS */
 .admin-page { background: #312450; min-height: 100vh; }
+.admin-page [hidden] { display: none !important; }
 .admin-shell { margin: 0 auto; max-width: 76rem; padding: 2rem clamp(1rem, 4vw, 3rem) 4rem; }
 .admin-header { align-items: center; border-bottom: 1px solid rgba(255, 216, 77, 0.35); display: flex; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem; }
 .admin-brand { align-items: center; display: inline-flex; gap: 0.8rem; }
@@ -5790,7 +5791,7 @@ img {
 .admin-dashboard { background: linear-gradient(135deg, rgba(102, 62, 202, 0.85), rgba(61, 22, 96, 0.9)); border: 1px solid rgba(255, 216, 77, 0.4); border-radius: 1rem; padding: clamp(1.25rem, 3vw, 2.25rem); }
 .admin-login-panel { margin: 4rem auto; max-width: 34rem; text-align: center; }
 .admin-login-panel h1,
-.admin-dashboard h1,
+.admin-dashboard h2,
 .admin-editor h2 { color: #ffffff; }
 .admin-login-panel p { color: rgba(255, 255, 255, 0.9) !important; }
 .admin-google-button { margin: 1rem 0; }
