@@ -4815,6 +4815,46 @@ text-transform: uppercase;
     z-index: 2;
 }
 
+/* Keep the complete desktop navigation, including Documentation, on one
+   aligned row. The compact mobile menu still takes over at 736px and below. */
+@media screen and (min-width: 737px) {
+    #header > nav > ul {
+        flex-wrap: nowrap;
+        gap: 0.7em 1em;
+    }
+
+    #header > nav > ul > li {
+        flex: 0 0 auto;
+    }
+
+    #header > nav > ul > li a {
+        font-size: 0.55em;
+        letter-spacing: 0.12em;
+        white-space: nowrap;
+    }
+}
+
+@media screen and (min-width: 737px) and (max-width: 1280px) {
+    #header {
+        padding-left: 1em;
+        padding-right: 1em;
+    }
+
+    #header > .header-brand {
+        font-size: clamp(1em, 2vw, 1.35em);
+        margin-left: 0.65em;
+    }
+
+    #header > nav > ul {
+        gap: 0.45em 0.7em;
+    }
+
+    #header > nav > ul > li a {
+        font-size: 0.5em;
+        letter-spacing: 0.1em;
+    }
+}
+
 /* Consistent gold edging gives content imagery a finished, branded frame. */
 img {
     border: solid 2px rgba(255, 216, 77, 0.68);
