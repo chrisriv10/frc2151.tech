@@ -26,6 +26,23 @@ function setSaveStatus(message, kind = '') {
   saveStatus.className = `admin-save-status ${kind ? `is-${kind}` : ''}`;
 }
 
+function authErrorMessage(error) {
+  switch (error?.code) {
+    case 'auth/unauthorized-domain':
+      return 'This website is not authorized in Firebase. Add frc2151.tech under Authentication → Settings → Authorized domains.';
+    case 'auth/popup-blocked':
+      return 'Your browser blocked the Google sign-in popup. Allow popups for frc2151.tech and try again.';
+    case 'auth/popup-closed-by-user':
+      return 'The Google sign-in window was closed before sign-in finished.';
+    case 'auth/operation-not-allowed':
+      return 'Google sign-in is not enabled in Firebase Authentication.';
+    case 'auth/network-request-failed':
+      return 'Firebase could not reach the network. Check your connection and try again.';
+    default:
+      return 'Sign-in was not completed. Please try again.';
+  }
+}
+
 function show(element, visible) { element.hidden = !visible; }
 
 function slugify(value) {
@@ -261,7 +278,8 @@ async function initialize() {
         await signInWithPopup(state.firebase.auth, new GoogleAuthProvider());
       } catch (error) {
         console.error('Admin sign-in failed.', error);
-        setStatus('Sign-in was not completed. Please try again.', 'error');
+        if (!state.user) document.querySelector('[data-action="logout"]').hidden = true;
+        setStatus(authErrorMessage(error), 'error');
       }
     });
     document.querySelector('[data-action="logout"]').addEventListener('click', () => signOut(state.firebase.auth));
