@@ -7,7 +7,7 @@
 const FIREBASE_SDK_VERSION = '11.0.2';
 
 export const firebaseConfig = Object.freeze({
-  apiKey: 'AIzaSyCbrAOOzxBuIeQ8oWF19lTn_432h6gaCEA',
+  apiKey: 'AIzaSyCPcFbW_71hgnyHrdJUwDD_CaDxfOEYdNI',
   authDomain: 'frc-2151.firebaseapp.com',
   projectId: 'frc-2151',
   storageBucket: 'frc-2151.firebasestorage.app',
