@@ -1,19 +1,19 @@
 /*
  * Firebase setup for the optional News CMS.
  *
- * The values below are public web-app configuration, not credentials. Replace
- * the placeholders with the configuration from the Firebase console. Security
- * is enforced by Firestore and Storage Rules, never by this file.
+ * These values are public web-app configuration, not credentials. Security is
+ * enforced by Firestore and Storage Rules, never by this file.
  */
 const FIREBASE_SDK_VERSION = '11.0.2';
 
 export const firebaseConfig = Object.freeze({
-  apiKey: 'REPLACE_WITH_FIREBASE_API_KEY',
-  authDomain: 'REPLACE_WITH_FIREBASE_AUTH_DOMAIN',
-  projectId: 'REPLACE_WITH_FIREBASE_PROJECT_ID',
-  storageBucket: 'REPLACE_WITH_FIREBASE_STORAGE_BUCKET',
-  messagingSenderId: 'REPLACE_WITH_FIREBASE_MESSAGING_SENDER_ID',
-  appId: 'REPLACE_WITH_FIREBASE_APP_ID'
+  apiKey: 'AIzaSyCbrAOOzxBuIeQ8oWF19lTn_432h6gaCEA',
+  authDomain: 'frc-2151.firebaseapp.com',
+  projectId: 'frc-2151',
+  storageBucket: 'frc-2151.firebasestorage.app',
+  messagingSenderId: '632295957569',
+  appId: '1:632295957569:web:95f18cf8410805989912c0',
+  measurementId: 'G-VB35BQH0YV'
 });
 
 export const firebaseConfigured = Object.values(firebaseConfig).every(

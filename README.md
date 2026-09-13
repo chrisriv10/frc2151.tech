@@ -35,10 +35,10 @@ The public pages share responsive mobile navigation, branded gold accents, acces
 
 ## News CMS setup
 
-The public News page and homepage preview are backed by Firebase only when the maintainer supplies a Firebase web-app configuration. The static site remains deployable on GitHub Pages, and the Firebase web configuration is safe to expose in browser code; never commit service-account keys, private API keys, or other server credentials.
+The public News page and homepage preview are backed by the `frc-2151` Firebase project configured in `assets/js/firebase-config.js`. The static site remains deployable on GitHub Pages, and the Firebase web configuration is safe to expose in browser code; never commit service-account keys, private API keys, or other server credentials.
 
 1. Create or select a Firebase project at [Firebase Console](https://console.firebase.google.com/).
-2. Register a Web app and copy its configuration into `assets/js/firebase-config.js`, replacing every `REPLACE_WITH_...` placeholder.
+2. Register a Web app and copy its configuration into `assets/js/firebase-config.js` if you are creating a different project. The repository is currently configured for the `frc-2151` project.
 3. Enable Google Authentication, Cloud Firestore, and Firebase Storage. Add `frc2151.tech` (and your local development host) under Authentication → Settings → Authorized domains.
 4. Deploy `firestore.rules`, `storage.rules`, and `firestore.indexes.json` with the Firebase CLI, or copy the rules into the Firebase console. The published-post query uses the `posts` composite index declared in `firestore.indexes.json`.
 5. Sign in once at `admin.html`, copy the signed-in account’s Firebase UID, and manually create an `admins/{uid}` document in Firestore. The document may contain any non-sensitive notes; its existence is the authorization allowlist. Admin documents cannot be created from the website.
