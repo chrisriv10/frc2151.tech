@@ -5828,7 +5828,7 @@ img {
 .admin-dashboard h2,
 .admin-editor h2 { color: #ffffff; }
 .admin-login-panel p { color: rgba(255, 255, 255, 0.9) !important; }
-.admin-google-button { margin: 1rem 0; }
+.admin-google-button { margin: 2rem 0 1rem; }
 .admin-help { font-size: 0.85rem; }
 .admin-dashboard-heading,
 .admin-editor-heading { align-items: center; display: flex; gap: 1rem; justify-content: space-between; margin-bottom: 1.5rem; }
