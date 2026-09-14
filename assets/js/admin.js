@@ -15,6 +15,8 @@ const preview = document.querySelector('[data-editor-preview]');
 const uploadProgress = document.querySelector('[data-upload-progress]');
 const uploadStatus = document.querySelector('[data-upload-status]');
 const bodyImageAlt = document.querySelector('#post-body-image-alt');
+const bodyImageInput = document.querySelector('#post-body-image');
+const bodyImageInsertButton = document.querySelector('[data-action="insert-body-image"]');
 const bodyImagePreview = document.querySelector('[data-body-image-preview]');
 const validationMessage = document.querySelector('[data-validation-message]');
 const postSearch = document.querySelector('[data-post-search]');
@@ -24,8 +26,8 @@ const memberForm = document.querySelector('[data-member-form]');
 const memberList = document.querySelector('[data-member-list]');
 const memberStatus = document.querySelector('[data-member-status]');
 
-const state = { firebase: null, user: null, currentPost: null, posts: [], members: [], busy: false, search: '', filter: 'all', previewUrl: null, bodyImagePreviewUrl: null, editorRange: null };
-const busyControls = document.querySelectorAll('[data-action="save-draft"], [data-action="publish"], [data-action="unpublish"], #post-cover, #post-body-image, #post-body-image-alt');
+const state = { firebase: null, user: null, currentPost: null, posts: [], members: [], busy: false, search: '', filter: 'all', previewUrl: null, bodyImagePreviewUrl: null, editorRange: null, pendingBodyImage: null };
+const busyControls = document.querySelectorAll('[data-action="save-draft"], [data-action="publish"], [data-action="unpublish"], [data-action="insert-body-image"], #post-cover, #post-body-image, #post-body-image-alt');
 
 function setStatus(message, kind = '') {
   status.textContent = message;
@@ -289,6 +291,15 @@ function renderEditorPreview() {
   body.className = 'news-article-body';
   renderMarkdown(body, form.elements.bodyMarkdown.value || 'Your article text will appear here.');
   preview.append(body);
+  if (state.pendingBodyImage && state.bodyImagePreviewUrl) {
+    const pendingFigure = document.createElement('figure');
+    pendingFigure.className = 'news-article-cover admin-pending-image';
+    const pendingImage = document.createElement('img');
+    pendingImage.src = state.bodyImagePreviewUrl;
+    pendingImage.alt = bodyImageAlt.value.trim() || 'Selected article image preview';
+    pendingFigure.append(pendingImage);
+    preview.append(pendingFigure);
+  }
 }
 
 function resetEditor() {
@@ -300,6 +311,9 @@ function resetEditor() {
   form.elements.postId.value = '';
   bodyEditor.replaceChildren();
   state.editorRange = null;
+  state.pendingBodyImage = null;
+  bodyImageInsertButton.disabled = true;
+  bodyImageInput.value = '';
   renderBodyImagePreview(null);
   bodyImageAlt.value = '';
   state.currentPost = null;
@@ -755,15 +769,30 @@ form.elements.coverImage.addEventListener('change', (event) => {
   renderCoverPreview('', file);
   if (!preview.hidden) renderEditorPreview();
 });
-document.querySelector('#post-body-image').addEventListener('change', async (event) => {
+bodyImageInput.addEventListener('change', (event) => {
   if (state.busy) return;
   const file = event.target.files[0];
-  event.target.value = '';
   const error = validImage(file);
-  if (error) { uploadStatus.textContent = error; return; }
+  if (error) {
+    state.pendingBodyImage = null;
+    bodyImageInsertButton.disabled = true;
+    renderBodyImagePreview(null);
+    uploadStatus.textContent = error;
+    return;
+  }
+  state.pendingBodyImage = file;
   renderBodyImagePreview(file);
+  bodyImageInsertButton.disabled = false;
+  uploadStatus.textContent = 'Image ready. Place your cursor in the article, then select Insert Image.';
+  if (!preview.hidden) renderEditorPreview();
+});
+bodyImageInsertButton.addEventListener('mousedown', (event) => event.preventDefault());
+bodyImageInsertButton.addEventListener('click', async () => {
+  if (state.busy || !state.pendingBodyImage) return;
   const postId = form.elements.postId.value;
-  if (!postId) { uploadStatus.textContent = 'Save a draft first, then add body images.'; return; }
+  if (!postId) { uploadStatus.textContent = 'Save a draft first, then select Insert Image.'; return; }
+  rememberEditorSelection();
+  const file = state.pendingBodyImage;
   setBusy(true);
   try {
     const path = `news/${postId}/body-${Date.now()}-${fileName(file.name)}`;
@@ -773,12 +802,14 @@ document.querySelector('#post-body-image').addEventListener('change', async (eve
     insertImageIntoEditor(url, bodyImageAlt.value.trim() || file.name.replace(/\.[^.]+$/, ''));
     bodyImageAlt.value = '';
     renderBodyImagePreview(null);
+    state.pendingBodyImage = null;
+    bodyImageInput.value = '';
+    bodyImageInsertButton.disabled = true;
     if (!preview.hidden) renderEditorPreview();
     uploadStatus.textContent = 'Image uploaded and added to the article. Save the post to keep the change.';
   } catch (error) {
     console.error('Body image upload failed.', error);
     uploadStatus.textContent = `${postErrorMessage(error)} Image upload failed.`;
-    renderBodyImagePreview(null);
   } finally {
     setBusy(false);
   }

@@ -5870,7 +5870,7 @@ img {
 .admin-page small { color: rgba(255, 255, 255, 0.72); display: block; margin-top: 0.4rem; }
 .admin-body-field { margin-top: 1.5rem !important; }
 .markdown-toolbar { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.55rem; }
-.markdown-toolbar .toolbar-label { margin-left: 0.3rem; }
+.markdown-toolbar .button.small { align-items: center; display: inline-flex; justify-content: center; line-height: 1; text-align: center; }
 .rich-editor { background: rgba(24, 12, 45, 0.6); border: 1px solid rgba(255, 216, 77, 0.32); border-radius: 0.35rem; color: #ffffff; min-height: 19rem; overflow-wrap: anywhere; padding: 1rem; }
 .rich-editor:focus { border-color: #ffd84d; box-shadow: 0 0 0 2px rgba(255, 216, 77, 0.18); outline: none; }
 .rich-editor:empty::before { color: rgba(255, 255, 255, 0.52); content: attr(data-placeholder); pointer-events: none; }
