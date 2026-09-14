@@ -96,10 +96,27 @@ async function getPublishedPosts(limitCount) {
   const firebase = await getFirebase();
   if (!firebase) return [];
   const { collection, getDocs, limit, orderBy, query, where } = firebase.firestoreSdk;
-  const constraints = [where('status', '==', 'published'), orderBy('publishedAt', 'desc')];
-  if (limitCount) constraints.push(limit(limitCount));
-  const snapshot = await getDocs(query(collection(firebase.db, 'posts'), ...constraints));
-  return snapshot.docs.map(postFromSnapshot);
+  const postsCollection = collection(firebase.db, 'posts');
+  const published = where('status', '==', 'published');
+  let snapshot;
+  try {
+    const constraints = [published, orderBy('publishedAt', 'desc')];
+    if (limitCount) constraints.push(limit(limitCount));
+    snapshot = await getDocs(query(postsCollection, ...constraints));
+  } catch (error) {
+    // A freshly configured Firebase project may not have the composite index yet.
+    // Retry with the same server-side published filter, then sort the safe result
+    // locally so public pages still work while the index is being deployed.
+    if (error?.code !== 'failed-precondition') throw error;
+    console.warn('Published-post index is unavailable; using a filtered fallback query.', error);
+    snapshot = await getDocs(query(postsCollection, published));
+  }
+  const posts = snapshot.docs.map(postFromSnapshot).sort((a, b) => {
+    const aTime = timestampToDate(a.publishedAt)?.getTime() || 0;
+    const bTime = timestampToDate(b.publishedAt)?.getTime() || 0;
+    return bTime - aTime;
+  });
+  return limitCount ? posts.slice(0, limitCount) : posts;
 }
 
 export async function loadLatestNews() {
