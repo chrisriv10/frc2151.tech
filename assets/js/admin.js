@@ -13,8 +13,11 @@ const coverPreview = document.querySelector('[data-cover-preview]');
 const preview = document.querySelector('[data-editor-preview]');
 const uploadProgress = document.querySelector('[data-upload-progress]');
 const uploadStatus = document.querySelector('[data-upload-status]');
+const postSearch = document.querySelector('[data-post-search]');
+const postFilter = document.querySelector('[data-post-filter]');
 
-const state = { firebase: null, user: null, currentPost: null, posts: [] };
+const state = { firebase: null, user: null, currentPost: null, posts: [], busy: false, search: '', filter: 'all', previewUrl: null };
+const busyControls = document.querySelectorAll('[data-action="save-draft"], [data-action="publish"], [data-action="unpublish"], #post-cover, #post-body-image');
 
 function setStatus(message, kind = '') {
   status.textContent = message;
@@ -24,6 +27,20 @@ function setStatus(message, kind = '') {
 function setSaveStatus(message, kind = '') {
   saveStatus.textContent = message;
   saveStatus.className = `admin-save-status ${kind ? `is-${kind}` : ''}`;
+}
+
+function setBusy(value) {
+  state.busy = value;
+  busyControls.forEach((control) => { control.disabled = value; });
+  editor.setAttribute('aria-busy', String(value));
+}
+
+function withTimeout(promise, milliseconds, code) {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(Object.assign(new Error(code), { code })), milliseconds);
+  });
+  return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timeoutId));
 }
 
 function authErrorMessage(error) {
@@ -40,6 +57,24 @@ function authErrorMessage(error) {
       return 'Firebase could not reach the network. Check your connection and try again.';
     default:
       return 'Sign-in was not completed. Please try again.';
+  }
+}
+
+function postErrorMessage(error) {
+  switch (error?.code) {
+    case 'permission-denied':
+      return 'Firebase denied this change. Confirm your UID is in admins and that firestore.rules is published.';
+    case 'failed-precondition':
+      return 'Firebase needs its database index or setup completed. Check the Firestore console and try again.';
+    case 'unavailable':
+    case 'network-request-failed':
+      return 'Firebase is temporarily unreachable. Check your connection and try again.';
+    case 'save-timeout':
+      return 'Saving took too long and was stopped. Check Firebase and try again.';
+    case 'upload-timeout':
+      return 'The image upload took too long and was stopped. Check Storage and try again.';
+    default:
+      return 'The post could not be saved. Please try again.';
   }
 }
 
@@ -69,7 +104,55 @@ function renderCoverPreview(url, file) {
   coverPreview.append(image);
 }
 
+function renderEditorPreview() {
+  if (state.previewUrl) {
+    URL.revokeObjectURL(state.previewUrl);
+    state.previewUrl = null;
+  }
+  preview.replaceChildren();
+  const title = document.createElement('h1');
+  title.className = 'major';
+  title.textContent = form.elements.title.value.trim() || 'Your post title';
+  preview.append(title);
+
+  const meta = document.createElement('p');
+  meta.className = 'news-article-meta';
+  meta.textContent = 'Preview';
+  const author = form.elements.author.value.trim();
+  if (author) meta.append(document.createTextNode(` · By ${author}`));
+  preview.append(meta);
+
+  const coverFile = form.elements.coverImage.files[0];
+  const coverUrl = coverFile ? (state.previewUrl = URL.createObjectURL(coverFile)) : safeImageUrl(state.currentPost?.coverImageUrl);
+  if (coverUrl) {
+    const figure = document.createElement('figure');
+    figure.className = 'news-article-cover';
+    const image = document.createElement('img');
+    image.src = coverUrl;
+    image.alt = 'Featured image preview';
+    figure.append(image);
+    preview.append(figure);
+  }
+
+  const excerpt = form.elements.excerpt.value.trim();
+  if (excerpt) {
+    const summary = document.createElement('p');
+    summary.className = 'news-card-excerpt';
+    summary.textContent = excerpt;
+    preview.append(summary);
+  }
+
+  const body = document.createElement('div');
+  body.className = 'news-article-body';
+  renderMarkdown(body, form.elements.bodyMarkdown.value || 'Your article text will appear here.');
+  preview.append(body);
+}
+
 function resetEditor() {
+  if (state.previewUrl) {
+    URL.revokeObjectURL(state.previewUrl);
+    state.previewUrl = null;
+  }
   form.reset();
   form.elements.postId.value = '';
   state.currentPost = null;
@@ -110,14 +193,20 @@ function closeEditor() {
 
 function renderPostList() {
   postList.replaceChildren();
-  if (!state.posts.length) {
+  const searchTerm = state.search.trim().toLowerCase();
+  const posts = state.posts.filter((post) => {
+    const matchesFilter = state.filter === 'all' || post.status === state.filter;
+    const matchesSearch = !searchTerm || [post.title, post.excerpt, post.author].some((value) => String(value || '').toLowerCase().includes(searchTerm));
+    return matchesFilter && matchesSearch;
+  });
+  if (!posts.length) {
     const empty = document.createElement('div');
     empty.className = 'admin-empty';
-    empty.textContent = 'No posts yet. Create the first team update.';
+    empty.textContent = state.posts.length ? 'No posts match these filters.' : 'No posts yet. Create the first team update.';
     postList.append(empty);
     return;
   }
-  state.posts.forEach((post) => {
+  posts.forEach((post) => {
     const row = document.createElement('article');
     row.className = 'admin-post-row';
     const details = document.createElement('div');
@@ -141,6 +230,9 @@ function renderPostList() {
       const view = document.createElement('a');
       view.className = 'button small'; view.href = `post.html?id=${encodeURIComponent(post.id)}`; view.target = '_blank'; view.rel = 'noopener'; view.textContent = 'Preview';
       actions.append(view);
+      const unpublish = document.createElement('button');
+      unpublish.type = 'button'; unpublish.className = 'button small'; unpublish.textContent = 'Return to Draft'; unpublish.dataset.unpublishId = post.id;
+      actions.append(unpublish);
     }
     const remove = document.createElement('button');
     remove.type = 'button'; remove.className = 'button small danger'; remove.textContent = 'Delete'; remove.dataset.deleteId = post.id;
@@ -170,13 +262,26 @@ function uploadFile(file, path) {
   return new Promise((resolve, reject) => {
     const { ref, uploadBytesResumable, getDownloadURL } = state.firebase.storageSdk;
     const task = uploadBytesResumable(ref(state.firebase.storage, path), file, { contentType: file.type, cacheControl: 'public,max-age=31536000' });
+    let settled = false;
+    const finish = (callback, value) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeoutId);
+      callback(value);
+    };
+    const timeoutId = window.setTimeout(() => {
+      task.cancel();
+      finish(reject, Object.assign(new Error('upload-timeout'), { code: 'upload-timeout' }));
+    }, 120000);
     uploadProgress.hidden = false;
     uploadProgress.value = 0;
     task.on('state_changed', (snapshot) => {
       uploadProgress.value = Math.round(snapshot.bytesTransferred / snapshot.totalBytes * 100);
       uploadStatus.textContent = `Uploading image… ${uploadProgress.value}%`;
-    }, reject, async () => {
-      try { resolve(await getDownloadURL(task.snapshot.ref)); } catch (error) { reject(error); }
+    }, (error) => {
+      finish(reject, error);
+    }, async () => {
+      try { finish(resolve, await getDownloadURL(task.snapshot.ref)); } catch (error) { finish(reject, error); }
     });
   }).finally(() => {
     uploadProgress.hidden = true;
@@ -193,6 +298,7 @@ function validImage(file) {
 }
 
 async function savePost(desiredStatus) {
+  if (state.busy) return;
   if (!form.reportValidity()) return;
   if (!state.firebase || !state.user) { setSaveStatus('You must be signed in to save a post.', 'error'); return; }
   const values = Object.fromEntries(new FormData(form));
@@ -206,6 +312,7 @@ async function savePost(desiredStatus) {
   let coverImageUrl = previous.coverImageUrl || null;
   let coverImagePath = previous.coverImagePath || null;
   const imagePaths = Array.isArray(previous.imagePaths) ? [...previous.imagePaths] : [];
+  setBusy(true);
   try {
     setSaveStatus(desiredStatus === 'published' ? 'Publishing…' : 'Saving draft…');
     if (coverFile) {
@@ -223,7 +330,7 @@ async function savePost(desiredStatus) {
       publishedAt: desiredStatus === 'published' ? (previous.publishedAt || serverTimestamp()) : null
     };
     if (!previous.id) payload.createdAt = serverTimestamp();
-    await setDoc(doc(state.firebase.db, 'posts', postId), payload, { merge: true });
+    await withTimeout(setDoc(doc(state.firebase.db, 'posts', postId), payload, { merge: true }), 30000, 'save-timeout');
     state.currentPost = { ...previous, ...payload, id: postId, publishedAt: desiredStatus === 'published' ? (previous.publishedAt || new Date()) : null };
     form.elements.postId.value = postId;
     document.querySelector('[data-action="unpublish"]').hidden = desiredStatus !== 'published';
@@ -231,7 +338,9 @@ async function savePost(desiredStatus) {
     await loadPosts();
   } catch (error) {
     console.error('Unable to save news post.', error);
-    setSaveStatus('The post could not be saved. Please try again.', 'error');
+    setSaveStatus(postErrorMessage(error), 'error');
+  } finally {
+    setBusy(false);
   }
 }
 
@@ -252,6 +361,28 @@ async function deletePost(post) {
   }
 }
 
+async function returnToDraft(post) {
+  if (state.busy) return;
+  if (!window.confirm(`Return “${post.title || 'Untitled post'}” to drafts? It will no longer be visible publicly.`)) return;
+  state.busy = true;
+  postList.setAttribute('aria-busy', 'true');
+  setStatus('Returning post to drafts…');
+  try {
+    const { doc, serverTimestamp, updateDoc } = state.firebase.firestoreSdk;
+    await withTimeout(updateDoc(doc(state.firebase.db, 'posts', post.id), {
+      status: 'draft', publishedAt: null, updatedAt: serverTimestamp(), updatedBy: state.user.uid
+    }), 30000, 'save-timeout');
+    setStatus('Post returned to drafts.', 'success');
+    await loadPosts();
+  } catch (error) {
+    console.error('Unable to unpublish news post.', error);
+    setStatus(postErrorMessage(error), 'error');
+  } finally {
+    state.busy = false;
+    postList.removeAttribute('aria-busy');
+  }
+}
+
 function insertMarkdown(value) {
   const textarea = form.elements.bodyMarkdown;
   const start = textarea.selectionStart;
@@ -260,12 +391,12 @@ function insertMarkdown(value) {
   const replacement = value.replace(/bold|italic|Heading|List item|Quote|text/g, selected);
   textarea.setRangeText(replacement, start, end, 'end');
   textarea.focus();
-  if (!preview.hidden) renderMarkdown(preview, textarea.value);
+  if (!preview.hidden) renderEditorPreview();
 }
 
 async function initialize() {
   if (!firebaseConfigured) {
-    setStatus('News CMS is not configured yet. Add the Firebase web config to enable admin access.', 'warning');
+    setStatus('News Admin is not configured yet. Add the Firebase web config to enable admin access.', 'warning');
     document.querySelector('[data-action="google-login"]').disabled = true;
     return;
   }
@@ -324,43 +455,57 @@ document.querySelector('#post-title').addEventListener('input', (event) => {
 });
 document.querySelector('[data-action="toggle-preview"]').addEventListener('click', (event) => {
   const isHidden = preview.hidden;
-  if (isHidden) renderMarkdown(preview, form.elements.bodyMarkdown.value);
+  if (isHidden) renderEditorPreview();
   preview.hidden = !isHidden;
   event.currentTarget.setAttribute('aria-pressed', String(isHidden));
 });
 document.querySelectorAll('[data-markdown]').forEach((button) => button.addEventListener('click', () => insertMarkdown(button.dataset.markdown)));
+form.addEventListener('input', () => { if (!preview.hidden) renderEditorPreview(); });
+postSearch.addEventListener('input', (event) => { state.search = event.target.value; renderPostList(); });
+postFilter.addEventListener('change', (event) => { state.filter = event.target.value; renderPostList(); });
 form.elements.coverImage.addEventListener('change', (event) => {
   const file = event.target.files[0];
   const error = file && validImage(file);
   if (error) { setSaveStatus(error, 'error'); event.target.value = ''; coverPreview.replaceChildren(); return; }
   renderCoverPreview('', file);
+  if (!preview.hidden) renderEditorPreview();
 });
 document.querySelector('#post-body-image').addEventListener('change', async (event) => {
+  if (state.busy) return;
   const file = event.target.files[0];
   event.target.value = '';
   const error = validImage(file);
   if (error) { uploadStatus.textContent = error; return; }
   const postId = form.elements.postId.value;
   if (!postId) { uploadStatus.textContent = 'Save a draft first, then add body images.'; return; }
+  setBusy(true);
   try {
     const path = `news/${postId}/body-${Date.now()}-${fileName(file.name)}`;
     const url = await uploadFile(file, path);
     if (!state.currentPost.imagePaths) state.currentPost.imagePaths = [];
     state.currentPost.imagePaths.push(path);
     form.elements.bodyMarkdown.value += `${form.elements.bodyMarkdown.value.trim() ? '\n\n' : ''}![${file.name.replace(/\.[^.]+$/, '')}](${url})`;
+    if (!preview.hidden) renderEditorPreview();
     uploadStatus.textContent = 'Image uploaded and added to the article. Save the post to keep the change.';
   } catch (error) {
     console.error('Body image upload failed.', error);
-    uploadStatus.textContent = 'Image upload failed. Please try again.';
+    uploadStatus.textContent = `${postErrorMessage(error)} Image upload failed.`;
+  } finally {
+    setBusy(false);
   }
 });
 postList.addEventListener('click', (event) => {
   const editId = event.target.dataset.editId;
   const deleteId = event.target.dataset.deleteId;
+  const unpublishId = event.target.dataset.unpublishId;
   if (editId) openEditor(state.posts.find((post) => post.id === editId));
   if (deleteId) {
     const post = state.posts.find((item) => item.id === deleteId);
     if (post) deletePost(post);
+  }
+  if (unpublishId) {
+    const post = state.posts.find((item) => item.id === unpublishId);
+    if (post) returnToDraft(post);
   }
 });
 

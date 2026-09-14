@@ -16,7 +16,7 @@ FIRST Robotics Competition team dedicated to engineering, programming, leadershi
 - **Sponsors** (`sponsors.html`) - Sponsor recognition and partnership info
 - **News** (`news.html`) - Published team updates and full article views via `post.html?id=...`
 
-The public pages share responsive mobile navigation, branded gold accents, accessible focus states, and layouts tuned for common phone widths. Sponsor sections include contribution, funding, and benefits cards with team photography. The About page includes a responsive team-photo carousel, and the Home page includes a live Behold Instagram feed for [@montypythons2151](https://www.instagram.com/montypythons2151/). News is powered by the optional Firebase CMS described below.
+The public pages share responsive mobile navigation, branded gold accents, accessible focus states, and layouts tuned for common phone widths. Sponsor sections include contribution, funding, and benefits cards with team photography. The About page includes a responsive team-photo carousel, and the Home page includes a live Behold Instagram feed for [@montypythons2151](https://www.instagram.com/montypythons2151/). News is powered by the optional Firebase News Admin page described below.
 
 ## Contact
 
@@ -33,7 +33,7 @@ The public pages share responsive mobile navigation, branded gold accents, acces
 - HTML/CSS/JS
 - Hosted on GitHub Pages with the custom domain [frc2151.tech](https://frc2151.tech)
 
-## News CMS setup
+## News Admin setup
 
 The public News page and homepage preview are backed by the `frc-2151` Firebase project configured in `assets/js/firebase-config.js`. The static site remains deployable on GitHub Pages, and the Firebase web configuration is safe to expose in browser code; never commit service-account keys, private API keys, or other server credentials.
 
@@ -45,4 +45,4 @@ The public News page and homepage preview are backed by the `frc-2151` Firebase 
 6. Return to `admin.html` to create drafts, upload images under `news/<post-id>/`, publish, edit, unpublish, or delete posts. Public pages query only `status == "published"`; drafts are blocked by Firestore Rules as well as by the UI.
 7. For local testing, serve the repository from an HTTP server (for example `python -m http.server 8000`) and add `localhost` to Firebase Authorized domains. Open `http://localhost:8000/` and test the public News page, `post.html?id=...`, and the admin workflow.
 
-The CMS uses Firebase Authentication for sign-in, Firestore for post metadata and Markdown, and Firebase Storage for images. Article Markdown is rendered through DOM APIs with protocol-checked links and images; post content is never inserted as unsanitized HTML. If Firebase is not configured or temporarily unavailable, public pages show friendly empty/error states and the rest of the site continues to work.
+The News Admin page uses Firebase Authentication for sign-in, Firestore for post metadata and Markdown, and Firebase Storage for images. Article Markdown is rendered through DOM APIs with protocol-checked links and images; post content is never inserted as unsanitized HTML. If Firebase is not configured or temporarily unavailable, public pages show friendly empty/error states and the rest of the site continues to work.

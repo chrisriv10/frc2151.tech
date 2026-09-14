@@ -5805,7 +5805,7 @@ img {
 .news-article-body img { border: 1px solid rgba(255, 216, 77, 0.65); border-radius: 0.5rem; display: block; max-height: 36rem; max-width: 100%; object-fit: contain; }
 .news-article-back { margin: 2rem 0 0 !important; }
 
-/* Admin CMS */
+/* News Admin */
 .admin-page { background: #312450; min-height: 100vh; }
 .admin-page [hidden] { display: none !important; }
 .admin-shell { margin: 0 auto; max-width: 76rem; padding: 2rem clamp(1rem, 4vw, 3rem) 4rem; }
@@ -5833,6 +5833,10 @@ img {
 .admin-dashboard-heading,
 .admin-editor-heading { align-items: center; display: flex; gap: 1rem; justify-content: space-between; margin-bottom: 1.5rem; }
 .admin-dashboard-heading p { margin: 0; }
+.admin-post-tools { align-items: center; display: grid; gap: 0.65rem; grid-template-columns: minmax(0, 1fr) 12rem; margin-bottom: 1rem; }
+.admin-post-tools input,
+.admin-post-tools select { background: rgba(24, 12, 45, 0.6); border: 1px solid rgba(255, 216, 77, 0.32); color: #ffffff; margin: 0; }
+.admin-post-tools select option { background: #312450; color: #ffffff; }
 .admin-post-list { display: grid; gap: 0.8rem; }
 .admin-post-row { align-items: center; background: rgba(49, 36, 80, 0.72); border: 1px solid rgba(255, 216, 77, 0.25); border-radius: 0.65rem; display: flex; gap: 1rem; justify-content: space-between; padding: 1rem 1.15rem; }
 .admin-post-details h2 { color: #ffffff; font-size: 1.1rem; margin: 0 0 0.35rem; }
@@ -5856,10 +5860,14 @@ img {
 .admin-body-field { margin-top: 1.5rem !important; }
 .markdown-toolbar { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.55rem; }
 .admin-editor-preview { background: rgba(24, 12, 45, 0.55); border: 1px solid rgba(255, 216, 77, 0.3); border-radius: 0.5rem; margin-top: 0.7rem; padding: 1rem; }
+.admin-editor-preview.news-article { margin-top: 0.7rem; max-width: none; }
+.admin-editor-preview .news-article-cover { margin-top: 1rem; }
+.admin-editor-preview .news-article-cover img { max-height: 20rem; }
 .admin-file-preview { margin-top: 0.75rem; }
 .admin-file-preview img { border: 1px solid #ffd84d; border-radius: 0.5rem; max-height: 12rem; max-width: 100%; object-fit: contain; }
 .admin-body-image-field { margin-top: 1rem !important; }
 .admin-body-image-field progress { accent-color: #ffd84d; display: block; margin-top: 0.7rem; width: 100%; }
+.admin-publish-help { color: rgba(255, 255, 255, 0.72) !important; font-size: 0.85rem !important; margin: 1.25rem 0 0.25rem !important; }
 .admin-form-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 0.65rem; margin-top: 1.5rem; }
 .admin-save-status { color: rgba(255, 255, 255, 0.86); margin-left: 0.35rem; }
 
@@ -5871,6 +5879,7 @@ img {
 	.admin-shell { padding-top: 1rem; }
 	.admin-dashboard-heading,
 	.admin-editor-heading { align-items: flex-start; flex-direction: column; }
+	.admin-post-tools { grid-template-columns: 1fr; }
 	.admin-post-row { align-items: flex-start; flex-direction: column; }
 	.admin-post-actions { justify-content: flex-start; }
 	.admin-form-grid { display: block; }

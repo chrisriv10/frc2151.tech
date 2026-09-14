@@ -6,13 +6,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
-  <link rel="stylesheet" href="assets/css/main.css?v=51" />
+  <link rel="stylesheet" href="assets/css/main.css?v=53" />
   <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
 </head>
 <body class="is-preload admin-page">
   <main id="admin-app" class="admin-shell">
     <header class="admin-header">
-      <a href="index.html" class="admin-brand"><img src="assets/css/images/2151Logo.png" alt="FRC Team 2151 Monty Pythons team logo"><span><strong>FRC 2151</strong><small>News CMS</small></span></a>
+      <a href="index.html" class="admin-brand"><img src="assets/css/images/2151Logo.png" alt="FRC Team 2151 Monty Pythons team logo"><span><strong>FRC 2151</strong><small>News Admin Page</small></span></a>
       <button type="button" class="button" data-action="logout" hidden>Log Out</button>
     </header>
 
@@ -30,6 +30,16 @@
         <div><h2 id="dashboard-title">News Dashboard</h2><p>Manage drafts and published team updates.</p></div>
         <button type="button" class="button primary" data-action="new-post">New Post</button>
       </div>
+      <div class="admin-post-tools">
+        <label class="sr-only" for="post-search">Search posts</label>
+        <input id="post-search" type="search" data-post-search placeholder="Search posts…" autocomplete="off">
+        <label class="sr-only" for="post-filter">Filter posts by status</label>
+        <select id="post-filter" data-post-filter>
+          <option value="all">All posts</option>
+          <option value="draft">Drafts</option>
+          <option value="published">Published</option>
+        </select>
+      </div>
       <div class="admin-post-list" data-post-list aria-live="polite"></div>
     </section>
 
@@ -46,19 +56,20 @@
         </div>
 
         <div class="field admin-body-field"><label for="post-body">Article body</label>
-          <small class="editor-help">Write your update normally. Select text and use the buttons below for simple formatting—you do not need to know Markdown.</small>
+          <small class="editor-help">Use the buttons below to format your update—no special formatting knowledge is needed.</small>
           <div class="markdown-toolbar" role="toolbar" aria-label="Article formatting tools">
             <button type="button" class="button small" data-markdown="**bold**" title="Make selected text bold">Bold</button><button type="button" class="button small" data-markdown="*italic*" title="Make selected text italic">Italic</button><button type="button" class="button small" data-markdown="# Heading" title="Add a section heading">Add heading</button><button type="button" class="button small" data-markdown="- List item" title="Add a bullet point">Bullet list</button><button type="button" class="button small" data-markdown="> Quote" title="Add a quote">Quote</button><button type="button" class="button small" data-action="toggle-preview" aria-pressed="false">Preview</button>
           </div>
           <textarea id="post-body" name="bodyMarkdown" rows="16" required placeholder="Write your team update here…"></textarea>
-          <div class="admin-editor-preview news-article-body" data-editor-preview hidden aria-label="Article preview"></div>
+          <div class="admin-editor-preview news-article" data-editor-preview hidden aria-label="Article preview"></div>
         </div>
 
         <div class="field admin-body-image-field"><label for="post-body-image">Add an image to the article</label><input id="post-body-image" type="file" accept="image/jpeg,image/png,image/webp,image/gif"><progress data-upload-progress max="100" value="0" hidden></progress><small data-upload-status role="status" aria-live="polite">Choose an image to upload it to this post.</small></div>
+        <p class="admin-publish-help">Save Draft keeps your post private. Publish makes it visible on the website.</p>
         <div class="admin-form-actions"><button type="button" class="button" data-action="save-draft">Save Draft</button><button type="button" class="button primary" data-action="publish">Publish</button><button type="button" class="button" data-action="unpublish" hidden>Return to Draft</button><span class="admin-save-status" data-save-status role="status" aria-live="polite"></span></div>
       </form>
     </section>
   </main>
-  <script type="module" src="assets/js/admin.js?v=2"></script>
+  <script type="module" src="assets/js/admin.js?v=4"></script>
 </body>
 </html>

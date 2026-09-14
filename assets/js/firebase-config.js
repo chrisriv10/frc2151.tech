@@ -1,5 +1,5 @@
 /*
- * Firebase setup for the optional News CMS.
+ * Firebase setup for the optional News Admin page.
  *
  * These values are public web-app configuration, not credentials. Security is
  * enforced by Firestore and Storage Rules, never by this file.
