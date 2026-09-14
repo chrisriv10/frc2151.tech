@@ -5869,6 +5869,20 @@ img {
 .admin-page small { color: rgba(255, 255, 255, 0.72); display: block; margin-top: 0.4rem; }
 .admin-body-field { margin-top: 1.5rem !important; }
 .markdown-toolbar { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.55rem; }
+.markdown-toolbar .toolbar-label { margin-left: 0.3rem; }
+.rich-editor { background: rgba(24, 12, 45, 0.6); border: 1px solid rgba(255, 216, 77, 0.32); border-radius: 0.35rem; color: #ffffff; min-height: 19rem; overflow-wrap: anywhere; padding: 1rem; }
+.rich-editor:focus { border-color: #ffd84d; box-shadow: 0 0 0 2px rgba(255, 216, 77, 0.18); outline: none; }
+.rich-editor:empty::before { color: rgba(255, 255, 255, 0.52); content: attr(data-placeholder); pointer-events: none; }
+.rich-editor p:first-child { margin-top: 0; }
+.rich-editor p:last-child { margin-bottom: 0; }
+.rich-editor h1,
+.rich-editor h2,
+.rich-editor h3 { color: #ffffff; }
+.rich-editor blockquote { border-left: 3px solid #ffd84d; margin: 1.25rem 0; padding-left: 1.25rem; }
+.rich-editor ul,
+.rich-editor ol { margin: 0 0 1rem 1.25rem; }
+.rich-editor a { color: #ffd84d; }
+.rich-editor img { border: 1px solid rgba(255, 216, 77, 0.65); border-radius: 0.5rem; display: block; max-height: 20rem; max-width: 100%; object-fit: contain; }
 .admin-editor-preview { background: rgba(24, 12, 45, 0.55); border: 1px solid rgba(255, 216, 77, 0.3); border-radius: 0.5rem; margin-top: 0.7rem; padding: 1rem; }
 .admin-editor-preview.news-article { margin-top: 0.7rem; max-width: none; }
 .admin-editor-preview .news-article-cover { margin-top: 1rem; }
@@ -5877,7 +5891,6 @@ img {
 .admin-file-preview img { border: 1px solid #ffd84d; border-radius: 0.5rem; max-height: 12rem; max-width: 100%; object-fit: contain; }
 .admin-body-image-field { margin-top: 1rem !important; }
 .admin-body-image-field progress { accent-color: #ffd84d; display: block; margin-top: 0.7rem; width: 100%; }
-.admin-publish-help { color: rgba(255, 255, 255, 0.72) !important; font-size: 0.85rem !important; margin: 1.25rem 0 0.25rem !important; }
 .admin-form-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 0.65rem; margin-top: 1.5rem; }
 .admin-save-status { color: rgba(255, 255, 255, 0.86); margin-left: 0.35rem; }
 

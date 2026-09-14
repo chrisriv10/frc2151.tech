@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
-  <link rel="stylesheet" href="assets/css/main.css?v=55" />
+  <link rel="stylesheet" href="assets/css/main.css?v=56" />
   <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
 </head>
 <body class="is-preload admin-page">
@@ -68,21 +68,21 @@
           <div class="field admin-form-wide"><label for="post-cover">Featured image</label><input id="post-cover" name="coverImage" type="file" accept="image/jpeg,image/png,image/webp,image/gif"><small>Optional. Images must be 10 MB or smaller.</small><div class="admin-file-preview" data-cover-preview></div></div>
         </div>
 
-        <div class="field admin-body-field"><label for="post-body">Article body</label>
-          <small class="editor-help">Use the buttons below to format your post.</small>
+        <div class="field admin-body-field"><label for="post-body-editor">Article body</label>
+          <small class="editor-help">Write and format your update in the editor. Formatting appears as you apply it.</small>
           <div class="markdown-toolbar" role="toolbar" aria-label="Article formatting tools">
-            <button type="button" class="button small" data-markdown="**bold**" title="Make selected text bold">Bold</button><button type="button" class="button small" data-markdown="*italic*" title="Make selected text italic">Italic</button><button type="button" class="button small" data-markdown="# Heading" title="Add a section heading">Add heading</button><button type="button" class="button small" data-markdown="- List item" title="Add a bullet point">Bullet list</button><button type="button" class="button small" data-markdown="> Quote" title="Add a quote">Quote</button><button type="button" class="button small" data-action="toggle-preview" aria-pressed="false">Preview</button>
+            <button type="button" class="button small" data-command="bold" title="Make selected text bold"><strong>B</strong><span class="toolbar-label">Bold</span></button><button type="button" class="button small" data-command="italic" title="Make selected text italic"><em>I</em><span class="toolbar-label">Italic</span></button><button type="button" class="button small" data-command="formatBlock" data-value="h2" title="Format as a heading">Heading</button><button type="button" class="button small" data-command="insertUnorderedList" title="Create a bullet list">Bullets</button><button type="button" class="button small" data-command="insertOrderedList" title="Create a numbered list">Numbered</button><button type="button" class="button small" data-command="formatBlock" data-value="blockquote" title="Format as a quote">Quote</button><button type="button" class="button small" data-action="toggle-preview" aria-pressed="false">Show Preview</button>
           </div>
-          <textarea id="post-body" name="bodyMarkdown" rows="16" required placeholder="Write your team update here…"></textarea>
+          <div id="post-body-editor" class="rich-editor" data-body-editor contenteditable="true" role="textbox" aria-multiline="true" aria-required="true" aria-label="Article body" data-placeholder="Write your team update here…"></div>
+          <textarea id="post-body" name="bodyMarkdown" rows="16" hidden aria-hidden="true"></textarea>
           <div class="admin-editor-preview news-article" data-editor-preview hidden aria-label="Article preview"></div>
         </div>
 
         <div class="field admin-body-image-field"><label for="post-body-image">Add an image to the article</label><input id="post-body-image" type="file" accept="image/jpeg,image/png,image/webp,image/gif"><progress data-upload-progress max="100" value="0" hidden></progress><small data-upload-status role="status" aria-live="polite">Choose an image to upload it to this post.</small></div>
-        <p class="admin-publish-help">Save Draft keeps your post private. Publish makes it visible on the website.</p>
         <div class="admin-form-actions"><button type="button" class="button" data-action="save-draft">Save Draft</button><button type="button" class="button primary" data-action="publish">Publish</button><button type="button" class="button" data-action="unpublish" hidden>Return to Draft</button><span class="admin-save-status" data-save-status role="status" aria-live="polite"></span></div>
       </form>
     </section>
   </main>
-  <script type="module" src="assets/js/admin.js?v=6"></script>
+  <script type="module" src="assets/js/admin.js?v=7"></script>
 </body>
 </html>

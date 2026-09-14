@@ -8,6 +8,7 @@ const editor = document.querySelector('[data-editor]');
 const status = document.querySelector('[data-admin-status]');
 const postList = document.querySelector('[data-post-list]');
 const form = document.querySelector('[data-post-form]');
+const bodyEditor = document.querySelector('[data-body-editor]');
 const saveStatus = document.querySelector('[data-save-status]');
 const coverPreview = document.querySelector('[data-cover-preview]');
 const preview = document.querySelector('[data-editor-preview]');
@@ -82,6 +83,14 @@ function postErrorMessage(error) {
       return 'Saving took too long and was stopped. Check Firebase and try again.';
     case 'upload-timeout':
       return 'The image upload took too long and was stopped. Check Storage and try again.';
+    case 'storage/unauthorized':
+      return 'Firebase Storage denied this upload. Confirm storage.rules is published and your account is an admin.';
+    case 'storage/bucket-not-found':
+    case 'storage/project-not-found':
+    case 'storage/object-not-found':
+      return 'Firebase Storage is not enabled for this project yet. Enable Storage in the Firebase console, then try again.';
+    case 'storage/quota-exceeded':
+      return 'Firebase Storage has reached its quota. Check the Firebase console before uploading another image.';
     default:
       return 'The post could not be saved. Please try again.';
   }
@@ -119,7 +128,80 @@ function renderCoverPreview(url, file) {
   coverPreview.append(image);
 }
 
+function inlineToMarkdown(node) {
+  if (node.nodeType === Node.TEXT_NODE) return node.nodeValue.replace(/\u00a0/g, ' ');
+  if (node.nodeType !== Node.ELEMENT_NODE) return '';
+  const tag = node.tagName.toLowerCase();
+  const content = Array.from(node.childNodes).map(inlineToMarkdown).join('');
+  if (tag === 'br') return '\n';
+  if (tag === 'strong' || tag === 'b') return `**${content}**`;
+  if (tag === 'em' || tag === 'i') return `*${content}*`;
+  if (tag === 'code') return `\`${content}\``;
+  if (tag === 'a') {
+    const href = safeImageUrl(node.getAttribute('href'));
+    return href ? `[${content}](${href})` : content;
+  }
+  if (tag === 'img') {
+    const src = safeImageUrl(node.getAttribute('src'));
+    return src ? `![${node.getAttribute('alt') || 'News image'}](${src})` : '';
+  }
+  return content;
+}
+
+function blockToMarkdown(node) {
+  if (node.nodeType === Node.TEXT_NODE) return node.nodeValue.trim();
+  if (node.nodeType !== Node.ELEMENT_NODE) return '';
+  const tag = node.tagName.toLowerCase();
+  if (tag === 'ul' || tag === 'ol') {
+    return Array.from(node.children).filter((child) => child.tagName.toLowerCase() === 'li')
+      .map((item, index) => `${tag === 'ol' ? `${index + 1}.` : '-'} ${inlineToMarkdown(item).trim()}`)
+      .join('\n');
+  }
+  if (tag === 'blockquote') return inlineToMarkdown(node).split('\n').map((line) => `> ${line.trim()}`).join('\n');
+  if (tag === 'pre') return `\`\`\`\n${node.textContent}\n\`\`\``;
+  if (/^h[1-6]$/.test(tag)) {
+    const level = Math.min(3, Math.max(1, Number(tag.slice(1)) - 1));
+    return `${'#'.repeat(level)} ${inlineToMarkdown(node).trim()}`;
+  }
+  return inlineToMarkdown(node).trim();
+}
+
+function syncBodyMarkdown() {
+  form.elements.bodyMarkdown.value = Array.from(bodyEditor.childNodes).map(blockToMarkdown).filter(Boolean).join('\n\n').trim();
+}
+
+function loadBodyEditor(markdown) {
+  const rendered = document.createElement('div');
+  renderMarkdown(rendered, markdown || '');
+  bodyEditor.replaceChildren();
+  while (rendered.firstChild) bodyEditor.append(rendered.firstChild);
+  syncBodyMarkdown();
+}
+
+function insertImageIntoEditor(url, altText) {
+  bodyEditor.focus();
+  const selection = window.getSelection();
+  const range = selection && selection.rangeCount ? selection.getRangeAt(0) : document.createRange();
+  if (!selection || !selection.rangeCount || !bodyEditor.contains(range.commonAncestorContainer)) {
+    range.selectNodeContents(bodyEditor);
+    range.collapse(false);
+  }
+  const paragraph = document.createElement('p');
+  const image = document.createElement('img');
+  image.src = url;
+  image.alt = altText || 'News image';
+  image.loading = 'lazy';
+  paragraph.append(image);
+  range.insertNode(paragraph);
+  range.setStartAfter(paragraph);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+  syncBodyMarkdown();
+}
+
 function renderEditorPreview() {
+  syncBodyMarkdown();
   if (state.previewUrl) {
     URL.revokeObjectURL(state.previewUrl);
     state.previewUrl = null;
@@ -170,13 +252,16 @@ function resetEditor() {
   }
   form.reset();
   form.elements.postId.value = '';
+  bodyEditor.replaceChildren();
   state.currentPost = null;
   document.querySelector('#editor-title').textContent = 'New Post';
   document.querySelector('[data-action="unpublish"]').hidden = true;
   coverPreview.replaceChildren();
   preview.replaceChildren();
   preview.hidden = true;
-  document.querySelector('[data-action="toggle-preview"]').setAttribute('aria-pressed', 'false');
+  const previewButton = document.querySelector('[data-action="toggle-preview"]');
+  previewButton.setAttribute('aria-pressed', 'false');
+  previewButton.textContent = 'Show Preview';
   setSaveStatus('');
 }
 
@@ -197,6 +282,7 @@ function openEditor(post = null) {
   form.elements.author.value = post.author || '';
   form.elements.excerpt.value = post.excerpt || '';
   form.elements.bodyMarkdown.value = post.bodyMarkdown || '';
+  loadBodyEditor(post.bodyMarkdown || '');
   document.querySelector('[data-action="unpublish"]').hidden = post.status !== 'published';
   renderCoverPreview(post.coverImageUrl, null);
   setSaveStatus('');
@@ -396,35 +482,19 @@ async function loadPosts() {
   }
 }
 
-function uploadFile(file, path) {
-  return new Promise((resolve, reject) => {
-    const { ref, uploadBytesResumable, getDownloadURL } = state.firebase.storageSdk;
-    const task = uploadBytesResumable(ref(state.firebase.storage, path), file, { contentType: file.type, cacheControl: 'public,max-age=31536000' });
-    let settled = false;
-    const finish = (callback, value) => {
-      if (settled) return;
-      settled = true;
-      window.clearTimeout(timeoutId);
-      callback(value);
-    };
-    const timeoutId = window.setTimeout(() => {
-      task.cancel();
-      finish(reject, Object.assign(new Error('upload-timeout'), { code: 'upload-timeout' }));
-    }, 120000);
-    uploadProgress.hidden = false;
-    uploadProgress.value = 0;
-    task.on('state_changed', (snapshot) => {
-      uploadProgress.value = Math.round(snapshot.bytesTransferred / snapshot.totalBytes * 100);
-      uploadStatus.textContent = `Uploading image… ${uploadProgress.value}%`;
-    }, (error) => {
-      finish(reject, error);
-    }, async () => {
-      try { finish(resolve, await getDownloadURL(task.snapshot.ref)); } catch (error) { finish(reject, error); }
-    });
-  }).finally(() => {
+async function uploadFile(file, path) {
+  const { ref, uploadBytes, getDownloadURL } = state.firebase.storageSdk;
+  uploadProgress.hidden = false;
+  uploadProgress.removeAttribute('value');
+  uploadStatus.textContent = 'Uploading image…';
+  try {
+    const snapshot = await withTimeout(uploadBytes(ref(state.firebase.storage, path), file, { contentType: file.type, cacheControl: 'public,max-age=31536000' }), 60000, 'upload-timeout');
+    uploadStatus.textContent = 'Image uploaded.';
+    return await withTimeout(getDownloadURL(snapshot.ref), 30000, 'upload-timeout');
+  } finally {
     uploadProgress.hidden = true;
     uploadProgress.value = 0;
-  });
+  }
 }
 
 function validImage(file) {
@@ -437,6 +507,7 @@ function validImage(file) {
 
 async function savePost(desiredStatus) {
   if (state.busy) return;
+  syncBodyMarkdown();
   if (!form.reportValidity()) return;
   if (!state.firebase || !state.user) { setSaveStatus('You must be signed in to save a post.', 'error'); return; }
   const values = Object.fromEntries(new FormData(form));
@@ -519,17 +590,6 @@ async function returnToDraft(post) {
     state.busy = false;
     postList.removeAttribute('aria-busy');
   }
-}
-
-function insertMarkdown(value) {
-  const textarea = form.elements.bodyMarkdown;
-  const start = textarea.selectionStart;
-  const end = textarea.selectionEnd;
-  const selected = textarea.value.slice(start, end) || 'text';
-  const replacement = value.replace(/bold|italic|Heading|List item|Quote|text/g, selected);
-  textarea.setRangeText(replacement, start, end, 'end');
-  textarea.focus();
-  if (!preview.hidden) renderEditorPreview();
 }
 
 async function initialize() {
@@ -616,8 +676,21 @@ document.querySelector('[data-action="toggle-preview"]').addEventListener('click
   if (isHidden) renderEditorPreview();
   preview.hidden = !isHidden;
   event.currentTarget.setAttribute('aria-pressed', String(isHidden));
+  event.currentTarget.textContent = isHidden ? 'Hide Preview' : 'Show Preview';
 });
-document.querySelectorAll('[data-markdown]').forEach((button) => button.addEventListener('click', () => insertMarkdown(button.dataset.markdown)));
+document.querySelectorAll('[data-command]').forEach((button) => {
+  button.addEventListener('mousedown', (event) => event.preventDefault());
+  button.addEventListener('click', () => {
+    bodyEditor.focus();
+    document.execCommand(button.dataset.command, false, button.dataset.value || null);
+    syncBodyMarkdown();
+    if (!preview.hidden) renderEditorPreview();
+  });
+});
+bodyEditor.addEventListener('input', () => {
+  syncBodyMarkdown();
+  if (!preview.hidden) renderEditorPreview();
+});
 form.addEventListener('input', () => { if (!preview.hidden) renderEditorPreview(); });
 postSearch.addEventListener('input', (event) => { state.search = event.target.value; renderPostList(); });
 postFilter.addEventListener('change', (event) => { state.filter = event.target.value; renderPostList(); });
@@ -642,7 +715,7 @@ document.querySelector('#post-body-image').addEventListener('change', async (eve
     const url = await uploadFile(file, path);
     if (!state.currentPost.imagePaths) state.currentPost.imagePaths = [];
     state.currentPost.imagePaths.push(path);
-    form.elements.bodyMarkdown.value += `${form.elements.bodyMarkdown.value.trim() ? '\n\n' : ''}![${file.name.replace(/\.[^.]+$/, '')}](${url})`;
+    insertImageIntoEditor(url, file.name.replace(/\.[^.]+$/, ''));
     if (!preview.hidden) renderEditorPreview();
     uploadStatus.textContent = 'Image uploaded and added to the article. Save the post to keep the change.';
   } catch (error) {
