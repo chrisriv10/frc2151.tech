@@ -5846,6 +5846,7 @@ img {
 .status-published { background: rgba(129, 236, 153, 0.18); color: #baf5ca; }
 .status-draft { background: rgba(255, 216, 77, 0.18); color: #ffe99b; }
 .admin-post-actions { display: flex; flex-wrap: wrap; gap: 0.45rem; justify-content: flex-end; }
+.admin-post-actions .button.small { align-items: center; display: inline-flex; height: 2.75rem; justify-content: center; line-height: 1; padding-bottom: 0; padding-top: 0; }
 .button.small { font-size: 0.72rem; min-height: 2.3rem; padding: 0.4rem 0.8rem; }
 .button.danger { border-color: rgba(255, 170, 170, 0.65); color: #ffd0d0; }
 .admin-empty,
