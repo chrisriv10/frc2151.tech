@@ -275,14 +275,15 @@ function renderMemberList() {
     details.className = 'admin-member-details';
     const label = document.createElement('strong');
     label.textContent = member.label || member.email || 'Team admin';
-    const uid = document.createElement('code');
-    uid.textContent = member.id;
-    details.append(label, uid);
+    const identifier = document.createElement('code');
+    identifier.textContent = member.email || `UID: ${member.id}`;
+    details.append(label, identifier);
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'button small danger';
     remove.dataset.removeMemberId = member.id;
-    if (member.id === state.user?.uid) {
+    remove.dataset.removeMemberKind = member.kind;
+    if ((member.kind === 'uid' && member.id === state.user?.uid) || (member.kind === 'email' && member.email === state.user?.email?.toLowerCase())) {
       remove.disabled = true;
       remove.textContent = 'Current account';
       remove.title = 'You cannot remove the account currently signed in.';
@@ -303,8 +304,14 @@ async function loadMembers() {
   memberList.append(loading);
   try {
     const { collection, getDocs } = state.firebase.firestoreSdk;
-    const snapshot = await getDocs(collection(state.firebase.db, 'admins'));
-    state.members = snapshot.docs.map((item) => ({ id: item.id, ...item.data() })).sort((a, b) => String(a.label || a.email || a.id).localeCompare(String(b.label || b.email || b.id)));
+    const [uidSnapshot, emailSnapshot] = await Promise.all([
+      getDocs(collection(state.firebase.db, 'admins')),
+      getDocs(collection(state.firebase.db, 'adminsByEmail'))
+    ]);
+    state.members = [
+      ...uidSnapshot.docs.map((item) => ({ kind: 'uid', id: item.id, ...item.data() })),
+      ...emailSnapshot.docs.map((item) => ({ kind: 'email', id: item.id, ...item.data() }))
+    ].sort((a, b) => String(a.label || a.email || a.id).localeCompare(String(b.label || b.email || b.id)));
   } catch (error) {
     console.error('Unable to load admin members.', error);
     memberList.replaceChildren();
@@ -322,9 +329,9 @@ async function addMember(event) {
   if (state.busy || !state.firebase || !state.user) return;
   if (!memberForm.reportValidity()) return;
   const values = Object.fromEntries(new FormData(memberForm));
-  const uid = values.uid.trim();
-  if (!/^[^/]{1,128}$/.test(uid)) {
-    setMemberStatus('Paste a valid Firebase User UID.', 'error');
+  const email = values.email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    setMemberStatus('Enter a valid Google email address.', 'error');
     return;
   }
   state.busy = true;
@@ -332,8 +339,9 @@ async function addMember(event) {
   setMemberStatus('Adding member…');
   try {
     const { doc, serverTimestamp, setDoc } = state.firebase.firestoreSdk;
-    await withTimeout(setDoc(doc(state.firebase.db, 'admins', uid), {
+    await withTimeout(setDoc(doc(state.firebase.db, 'adminsByEmail', email), {
       role: 'admin',
+      email,
       label: values.label.trim() || null,
       addedBy: state.user.uid,
       addedAt: serverTimestamp(),
@@ -351,16 +359,17 @@ async function addMember(event) {
   }
 }
 
-async function removeMember(uid) {
-  if (state.busy || uid === state.user?.uid) return;
-  const member = state.members.find((item) => item.id === uid);
-  const name = member?.label || member?.email || uid;
+async function removeMember(kind, id) {
+  const ownMember = (kind === 'uid' && id === state.user?.uid) || (kind === 'email' && id === state.user?.email?.toLowerCase());
+  if (state.busy || ownMember) return;
+  const member = state.members.find((item) => item.kind === kind && item.id === id);
+  const name = member?.label || member?.email || id;
   if (!window.confirm(`Remove ${name} from News Admin? They will lose access immediately.`)) return;
   state.busy = true;
   setMemberStatus('Removing member…');
   try {
     const { deleteDoc, doc } = state.firebase.firestoreSdk;
-    await withTimeout(deleteDoc(doc(state.firebase.db, 'admins', uid)), 30000, 'save-timeout');
+    await withTimeout(deleteDoc(doc(state.firebase.db, kind === 'email' ? 'adminsByEmail' : 'admins', id)), 30000, 'save-timeout');
     setMemberStatus('Member removed.', 'success');
     await loadMembers();
   } catch (error) {
@@ -555,7 +564,9 @@ async function initialize() {
       try {
         const { doc, getDoc } = state.firebase.firestoreSdk;
         const adminDoc = await getDoc(doc(state.firebase.db, 'admins', user.uid));
-        if (!adminDoc.exists()) {
+        const emailKey = user.email?.trim().toLowerCase();
+        const emailAdminDoc = emailKey ? await getDoc(doc(state.firebase.db, 'adminsByEmail', emailKey)) : null;
+        if (!adminDoc.exists() && !emailAdminDoc?.exists()) {
           setStatus('This account is not authorized for News Admin access.', 'error');
           await signOut(state.firebase.auth);
           return;
@@ -589,8 +600,9 @@ document.querySelector('[data-action="close-members"]').addEventListener('click'
 });
 memberForm.addEventListener('submit', addMember);
 memberList.addEventListener('click', (event) => {
-  const uid = event.target.dataset.removeMemberId;
-  if (uid) removeMember(uid);
+  const id = event.target.dataset.removeMemberId;
+  const kind = event.target.dataset.removeMemberKind;
+  if (id && kind) removeMember(kind, id);
 });
 document.querySelector('[data-action="close-editor"]').addEventListener('click', closeEditor);
 document.querySelector('[data-action="save-draft"]').addEventListener('click', () => savePost('draft'));

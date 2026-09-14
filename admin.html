@@ -44,12 +44,12 @@
 
     <section id="admin-members" class="admin-panel admin-members" data-members-panel hidden aria-labelledby="members-title">
       <div class="admin-dashboard-heading">
-        <div><h2 id="members-title">Team admins</h2><p>Add teammates by their Firebase UID. Only authorized admins can manage this list.</p></div>
+        <div><h2 id="members-title">Team admins</h2><p>Add teammates by the Google email they’ll use to sign in. Only authorized admins can manage this list.</p></div>
         <button type="button" class="button" data-action="close-members">Close</button>
       </div>
       <form class="admin-member-form" data-member-form>
-        <div class="field"><label for="member-uid">Member Firebase UID</label><input id="member-uid" name="uid" type="text" inputmode="text" autocomplete="off" required placeholder="Paste the UID from Firebase Authentication"><small>Have the teammate sign in at this page once, then copy their UID from Firebase Authentication → Users.</small></div>
-        <div class="field"><label for="member-label">Name or email (optional)</label><input id="member-label" name="label" type="text" maxlength="160" autocomplete="off" placeholder="For your team’s reference"></div>
+        <div class="field"><label for="member-email">Member Google email</label><input id="member-email" name="email" type="email" autocomplete="email" required placeholder="teammate@example.com"><small>They can sign in after you add this address. Use the same Google account they’ll choose on the login screen.</small></div>
+        <div class="field"><label for="member-label">Name (optional)</label><input id="member-label" name="label" type="text" maxlength="160" autocomplete="off" placeholder="For your team’s reference"></div>
         <button type="submit" class="button primary" data-action="add-member">Add Member</button>
         <span class="admin-save-status" data-member-status role="status" aria-live="polite"></span>
       </form>
@@ -83,6 +83,6 @@
       </form>
     </section>
   </main>
-  <script type="module" src="assets/js/admin.js?v=5"></script>
+  <script type="module" src="assets/js/admin.js?v=6"></script>
 </body>
 </html>

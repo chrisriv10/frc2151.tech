@@ -4,7 +4,11 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function isAdmin() {
       return request.auth != null
-        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+        && (
+          exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+          || (request.auth.token.email != null
+            && exists(/databases/$(database)/documents/adminsByEmail/$(request.auth.token.email)))
+        );
     }
 
     function validPost() {
@@ -39,6 +43,18 @@ service cloud.firestore {
       // the current account protected from accidental self-lockout.
       allow create, update: if isAdmin();
       allow delete: if isAdmin() && uid != request.auth.uid;
+    }
+
+    // Email allowlist entries make onboarding easier: an existing admin can
+    // add a teammate's Google email without first looking up their UID.
+    match /adminsByEmail/{email} {
+      // An account may check its own email entry; admins may load the list.
+      allow read: if request.auth != null
+        && (request.auth.token.email == email || isAdmin());
+      allow create, update: if isAdmin()
+        && request.resource.data.email == email
+        && request.resource.data.role == 'admin';
+      allow delete: if isAdmin() && request.auth.token.email != email;
     }
 
     match /posts/{postId} {
