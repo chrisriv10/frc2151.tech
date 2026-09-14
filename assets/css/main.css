@@ -5863,6 +5863,7 @@ img {
 .admin-form-wide { grid-column: 1 / -1; }
 .admin-page .field { margin: 0; }
 .admin-page label { color: #ffffff; display: block; font-weight: 700; margin-bottom: 0.45rem; }
+.optional-label { color: rgba(255, 255, 255, 0.65); font-size: 0.85em; font-weight: 400; }
 .admin-page input[type="text"],
 .admin-page textarea { background: rgba(24, 12, 45, 0.6); border: 1px solid rgba(255, 216, 77, 0.32); color: #ffffff; }
 .admin-page input[type="file"] { color: rgba(255, 255, 255, 0.9); width: 100%; }
@@ -5890,7 +5891,12 @@ img {
 .admin-file-preview { margin-top: 0.75rem; }
 .admin-file-preview img { border: 1px solid #ffd84d; border-radius: 0.5rem; max-height: 12rem; max-width: 100%; object-fit: contain; }
 .admin-body-image-field { margin-top: 1rem !important; }
+.admin-body-image-picker { display: grid; gap: 0.65rem; grid-template-columns: minmax(0, 1fr) minmax(12rem, 0.75fr); }
+.admin-body-image-picker input { margin: 0; }
 .admin-body-image-field progress { accent-color: #ffd84d; display: block; margin-top: 0.7rem; width: 100%; }
+.admin-inline-image-preview { margin-top: 0.75rem; }
+.admin-inline-image-preview img { border: 1px solid rgba(255, 216, 77, 0.65); border-radius: 0.5rem; max-height: 10rem; max-width: 100%; object-fit: contain; }
+.admin-validation-error { color: #ffb3b3 !important; font-weight: 700; margin: 1.25rem 0 0 !important; }
 .admin-form-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 0.65rem; margin-top: 1.5rem; }
 .admin-save-status { color: rgba(255, 255, 255, 0.86); margin-left: 0.35rem; }
 
@@ -5909,6 +5915,8 @@ img {
 	.admin-post-actions { justify-content: flex-start; }
 	.admin-form-grid { display: block; }
 	.admin-form-grid .field { margin-bottom: 1rem; }
+	.admin-body-image-picker { display: block; }
+	.admin-body-image-picker input + input { margin-top: 0.65rem; }
 	.admin-member-form { display: block; }
 	.admin-member-form .field { margin-bottom: 1rem; }
 	.admin-member-form .button { width: 100%; }

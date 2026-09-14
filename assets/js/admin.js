@@ -14,6 +14,9 @@ const coverPreview = document.querySelector('[data-cover-preview]');
 const preview = document.querySelector('[data-editor-preview]');
 const uploadProgress = document.querySelector('[data-upload-progress]');
 const uploadStatus = document.querySelector('[data-upload-status]');
+const bodyImageAlt = document.querySelector('#post-body-image-alt');
+const bodyImagePreview = document.querySelector('[data-body-image-preview]');
+const validationMessage = document.querySelector('[data-validation-message]');
 const postSearch = document.querySelector('[data-post-search]');
 const postFilter = document.querySelector('[data-post-filter]');
 const membersPanel = document.querySelector('[data-members-panel]');
@@ -21,8 +24,8 @@ const memberForm = document.querySelector('[data-member-form]');
 const memberList = document.querySelector('[data-member-list]');
 const memberStatus = document.querySelector('[data-member-status]');
 
-const state = { firebase: null, user: null, currentPost: null, posts: [], members: [], busy: false, search: '', filter: 'all', previewUrl: null };
-const busyControls = document.querySelectorAll('[data-action="save-draft"], [data-action="publish"], [data-action="unpublish"], #post-cover, #post-body-image');
+const state = { firebase: null, user: null, currentPost: null, posts: [], members: [], busy: false, search: '', filter: 'all', previewUrl: null, bodyImagePreviewUrl: null, editorRange: null };
+const busyControls = document.querySelectorAll('[data-action="save-draft"], [data-action="publish"], [data-action="unpublish"], #post-cover, #post-body-image, #post-body-image-alt');
 
 function setStatus(message, kind = '') {
   status.textContent = message;
@@ -37,6 +40,28 @@ function setSaveStatus(message, kind = '') {
 function setMemberStatus(message, kind = '') {
   memberStatus.textContent = message;
   memberStatus.className = `admin-save-status ${kind ? `is-${kind}` : ''}`;
+}
+
+function clearValidation() {
+  validationMessage.hidden = true;
+  validationMessage.textContent = '';
+}
+
+function validateForPublish() {
+  syncBodyMarkdown();
+  const missing = [];
+  if (!form.elements.title.value.trim()) missing.push('a title');
+  if (!form.elements.bodyMarkdown.value.trim()) missing.push('article text');
+  if (!form.elements.slug.value.trim()) missing.push('a URL identifier');
+  if (missing.length) {
+    validationMessage.textContent = `Before publishing, add ${missing.join(' and ')}.`;
+    validationMessage.hidden = false;
+    const target = !form.elements.title.value.trim() ? form.elements.title : !form.elements.bodyMarkdown.value.trim() ? bodyEditor : form.elements.slug;
+    target.focus();
+    return false;
+  }
+  clearValidation();
+  return true;
 }
 
 function setBusy(value) {
@@ -128,6 +153,26 @@ function renderCoverPreview(url, file) {
   coverPreview.append(image);
 }
 
+function renderBodyImagePreview(file) {
+  if (state.bodyImagePreviewUrl) URL.revokeObjectURL(state.bodyImagePreviewUrl);
+  state.bodyImagePreviewUrl = null;
+  bodyImagePreview.replaceChildren();
+  if (!file) { bodyImagePreview.hidden = true; return; }
+  state.bodyImagePreviewUrl = URL.createObjectURL(file);
+  const image = document.createElement('img');
+  image.src = state.bodyImagePreviewUrl;
+  image.alt = 'Selected article image preview';
+  bodyImagePreview.append(image);
+  bodyImagePreview.hidden = false;
+}
+
+function rememberEditorSelection() {
+  const selection = window.getSelection();
+  if (!selection || !selection.rangeCount) return;
+  const range = selection.getRangeAt(0);
+  if (bodyEditor.contains(range.commonAncestorContainer)) state.editorRange = range.cloneRange();
+}
+
 function inlineToMarkdown(node) {
   if (node.nodeType === Node.TEXT_NODE) return node.nodeValue.replace(/\u00a0/g, ' ');
   if (node.nodeType !== Node.ELEMENT_NODE) return '';
@@ -181,8 +226,8 @@ function loadBodyEditor(markdown) {
 function insertImageIntoEditor(url, altText) {
   bodyEditor.focus();
   const selection = window.getSelection();
-  const range = selection && selection.rangeCount ? selection.getRangeAt(0) : document.createRange();
-  if (!selection || !selection.rangeCount || !bodyEditor.contains(range.commonAncestorContainer)) {
+  const range = state.editorRange ? state.editorRange.cloneRange() : (selection && selection.rangeCount ? selection.getRangeAt(0) : document.createRange());
+  if (!bodyEditor.contains(range.commonAncestorContainer)) {
     range.selectNodeContents(bodyEditor);
     range.collapse(false);
   }
@@ -197,6 +242,7 @@ function insertImageIntoEditor(url, altText) {
   range.collapse(true);
   selection.removeAllRanges();
   selection.addRange(range);
+  state.editorRange = range.cloneRange();
   syncBodyMarkdown();
 }
 
@@ -253,6 +299,9 @@ function resetEditor() {
   form.reset();
   form.elements.postId.value = '';
   bodyEditor.replaceChildren();
+  state.editorRange = null;
+  renderBodyImagePreview(null);
+  bodyImageAlt.value = '';
   state.currentPost = null;
   document.querySelector('#editor-title').textContent = 'New Post';
   document.querySelector('[data-action="unpublish"]').hidden = true;
@@ -508,6 +557,7 @@ function validImage(file) {
 async function savePost(desiredStatus) {
   if (state.busy) return;
   syncBodyMarkdown();
+  if (desiredStatus === 'published' && !validateForPublish()) return;
   if (!form.reportValidity()) return;
   if (!state.firebase || !state.user) { setSaveStatus('You must be signed in to save a post.', 'error'); return; }
   const values = Object.fromEntries(new FormData(form));
@@ -688,10 +738,14 @@ document.querySelectorAll('[data-command]').forEach((button) => {
   });
 });
 bodyEditor.addEventListener('input', () => {
+  rememberEditorSelection();
   syncBodyMarkdown();
   if (!preview.hidden) renderEditorPreview();
 });
-form.addEventListener('input', () => { if (!preview.hidden) renderEditorPreview(); });
+bodyEditor.addEventListener('keyup', rememberEditorSelection);
+bodyEditor.addEventListener('mouseup', rememberEditorSelection);
+bodyEditor.addEventListener('blur', rememberEditorSelection);
+form.addEventListener('input', () => { clearValidation(); if (!preview.hidden) renderEditorPreview(); });
 postSearch.addEventListener('input', (event) => { state.search = event.target.value; renderPostList(); });
 postFilter.addEventListener('change', (event) => { state.filter = event.target.value; renderPostList(); });
 form.elements.coverImage.addEventListener('change', (event) => {
@@ -707,6 +761,7 @@ document.querySelector('#post-body-image').addEventListener('change', async (eve
   event.target.value = '';
   const error = validImage(file);
   if (error) { uploadStatus.textContent = error; return; }
+  renderBodyImagePreview(file);
   const postId = form.elements.postId.value;
   if (!postId) { uploadStatus.textContent = 'Save a draft first, then add body images.'; return; }
   setBusy(true);
@@ -715,12 +770,15 @@ document.querySelector('#post-body-image').addEventListener('change', async (eve
     const url = await uploadFile(file, path);
     if (!state.currentPost.imagePaths) state.currentPost.imagePaths = [];
     state.currentPost.imagePaths.push(path);
-    insertImageIntoEditor(url, file.name.replace(/\.[^.]+$/, ''));
+    insertImageIntoEditor(url, bodyImageAlt.value.trim() || file.name.replace(/\.[^.]+$/, ''));
+    bodyImageAlt.value = '';
+    renderBodyImagePreview(null);
     if (!preview.hidden) renderEditorPreview();
     uploadStatus.textContent = 'Image uploaded and added to the article. Save the post to keep the change.';
   } catch (error) {
     console.error('Body image upload failed.', error);
     uploadStatus.textContent = `${postErrorMessage(error)} Image upload failed.`;
+    renderBodyImagePreview(null);
   } finally {
     setBusy(false);
   }

@@ -65,11 +65,10 @@
           <div class="field"><label for="post-slug">URL identifier (optional)</label><input id="post-slug" name="slug" type="text" maxlength="160" pattern="[A-Za-z0-9-]+" required><small>This is generated automatically from the title. You can leave it unchanged.</small></div>
           <div class="field"><label for="post-author">Author</label><input id="post-author" name="author" type="text" maxlength="100" placeholder="Monty Pythons"></div>
           <div class="field admin-form-wide"><label for="post-excerpt">Excerpt / short description</label><textarea id="post-excerpt" name="excerpt" rows="3" maxlength="320"></textarea></div>
-          <div class="field admin-form-wide"><label for="post-cover">Featured image</label><input id="post-cover" name="coverImage" type="file" accept="image/jpeg,image/png,image/webp,image/gif"><small>Optional. Images must be 10 MB or smaller.</small><div class="admin-file-preview" data-cover-preview></div></div>
+          <div class="field admin-form-wide"><label for="post-cover">Featured image <span class="optional-label">(optional)</span></label><input id="post-cover" name="coverImage" type="file" accept="image/jpeg,image/png,image/webp,image/gif"><small>Images must be 10 MB or smaller.</small><div class="admin-file-preview" data-cover-preview></div></div>
         </div>
 
         <div class="field admin-body-field"><label for="post-body-editor">Article body</label>
-          <small class="editor-help">Write and format your update in the editor. Formatting appears as you apply it.</small>
           <div class="markdown-toolbar" role="toolbar" aria-label="Article formatting tools">
             <button type="button" class="button small" data-command="bold" title="Make selected text bold"><strong>B</strong><span class="toolbar-label">Bold</span></button><button type="button" class="button small" data-command="italic" title="Make selected text italic"><em>I</em><span class="toolbar-label">Italic</span></button><button type="button" class="button small" data-command="formatBlock" data-value="h2" title="Format as a heading">Heading</button><button type="button" class="button small" data-command="insertUnorderedList" title="Create a bullet list">Bullets</button><button type="button" class="button small" data-command="insertOrderedList" title="Create a numbered list">Numbered</button><button type="button" class="button small" data-command="formatBlock" data-value="blockquote" title="Format as a quote">Quote</button><button type="button" class="button small" data-action="toggle-preview" aria-pressed="false">Show Preview</button>
           </div>
@@ -78,7 +77,8 @@
           <div class="admin-editor-preview news-article" data-editor-preview hidden aria-label="Article preview"></div>
         </div>
 
-        <div class="field admin-body-image-field"><label for="post-body-image">Add an image to the article</label><input id="post-body-image" type="file" accept="image/jpeg,image/png,image/webp,image/gif"><progress data-upload-progress max="100" value="0" hidden></progress><small data-upload-status role="status" aria-live="polite">Choose an image to upload it to this post.</small></div>
+        <div class="field admin-body-image-field"><label for="post-body-image">Add an image to the article</label><div class="admin-body-image-picker"><input id="post-body-image" type="file" accept="image/jpeg,image/png,image/webp,image/gif"><input id="post-body-image-alt" type="text" maxlength="160" placeholder="Image description (optional)" aria-label="Image description (optional)"></div><div class="admin-inline-image-preview" data-body-image-preview hidden></div><progress data-upload-progress max="100" value="0" hidden></progress><small data-upload-status role="status" aria-live="polite">Save the post first, then choose an image to insert at your cursor.</small></div>
+        <p class="admin-validation-error" data-validation-message role="alert" hidden></p>
         <div class="admin-form-actions"><button type="button" class="button" data-action="save-draft">Save Draft</button><button type="button" class="button primary" data-action="publish">Publish</button><button type="button" class="button" data-action="unpublish" hidden>Return to Draft</button><span class="admin-save-status" data-save-status role="status" aria-live="polite"></span></div>
       </form>
     </section>
