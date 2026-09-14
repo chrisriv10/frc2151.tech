@@ -15,8 +15,12 @@ const uploadProgress = document.querySelector('[data-upload-progress]');
 const uploadStatus = document.querySelector('[data-upload-status]');
 const postSearch = document.querySelector('[data-post-search]');
 const postFilter = document.querySelector('[data-post-filter]');
+const membersPanel = document.querySelector('[data-members-panel]');
+const memberForm = document.querySelector('[data-member-form]');
+const memberList = document.querySelector('[data-member-list]');
+const memberStatus = document.querySelector('[data-member-status]');
 
-const state = { firebase: null, user: null, currentPost: null, posts: [], busy: false, search: '', filter: 'all', previewUrl: null };
+const state = { firebase: null, user: null, currentPost: null, posts: [], members: [], busy: false, search: '', filter: 'all', previewUrl: null };
 const busyControls = document.querySelectorAll('[data-action="save-draft"], [data-action="publish"], [data-action="unpublish"], #post-cover, #post-body-image');
 
 function setStatus(message, kind = '') {
@@ -27,6 +31,11 @@ function setStatus(message, kind = '') {
 function setSaveStatus(message, kind = '') {
   saveStatus.textContent = message;
   saveStatus.className = `admin-save-status ${kind ? `is-${kind}` : ''}`;
+}
+
+function setMemberStatus(message, kind = '') {
+  memberStatus.textContent = message;
+  memberStatus.className = `admin-save-status ${kind ? `is-${kind}` : ''}`;
 }
 
 function setBusy(value) {
@@ -76,6 +85,12 @@ function postErrorMessage(error) {
     default:
       return 'The post could not be saved. Please try again.';
   }
+}
+
+function memberErrorMessage(error) {
+  if (error?.code === 'permission-denied') return 'Firebase denied this change. Publish the updated firestore.rules and confirm you are an authorized admin.';
+  if (error?.code === 'unavailable' || error?.code === 'network-request-failed') return 'Firebase is temporarily unreachable. Check your connection and try again.';
+  return 'The member list could not be updated. Please try again.';
 }
 
 function show(element, visible) { element.hidden = !visible; }
@@ -168,6 +183,8 @@ function resetEditor() {
 function openEditor(post = null) {
   state.currentPost = post;
   show(dashboard, false);
+  show(membersPanel, false);
+  document.querySelector('[data-action="toggle-members"]').setAttribute('aria-expanded', 'false');
   show(editor, true);
   if (!post) {
     resetEditor();
@@ -240,6 +257,118 @@ function renderPostList() {
     row.append(details, actions);
     postList.append(row);
   });
+}
+
+function renderMemberList() {
+  memberList.replaceChildren();
+  if (!state.members.length) {
+    const empty = document.createElement('p');
+    empty.className = 'admin-empty';
+    empty.textContent = 'No additional admins have been added yet.';
+    memberList.append(empty);
+    return;
+  }
+  state.members.forEach((member) => {
+    const row = document.createElement('div');
+    row.className = 'admin-member-row';
+    const details = document.createElement('div');
+    details.className = 'admin-member-details';
+    const label = document.createElement('strong');
+    label.textContent = member.label || member.email || 'Team admin';
+    const uid = document.createElement('code');
+    uid.textContent = member.id;
+    details.append(label, uid);
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'button small danger';
+    remove.dataset.removeMemberId = member.id;
+    if (member.id === state.user?.uid) {
+      remove.disabled = true;
+      remove.textContent = 'Current account';
+      remove.title = 'You cannot remove the account currently signed in.';
+    } else {
+      remove.textContent = 'Remove';
+    }
+    row.append(details, remove);
+    memberList.append(row);
+  });
+}
+
+async function loadMembers() {
+  if (!state.firebase || !state.user) return;
+  memberList.replaceChildren();
+  const loading = document.createElement('p');
+  loading.className = 'admin-empty';
+  loading.textContent = 'Loading members…';
+  memberList.append(loading);
+  try {
+    const { collection, getDocs } = state.firebase.firestoreSdk;
+    const snapshot = await getDocs(collection(state.firebase.db, 'admins'));
+    state.members = snapshot.docs.map((item) => ({ id: item.id, ...item.data() })).sort((a, b) => String(a.label || a.email || a.id).localeCompare(String(b.label || b.email || b.id)));
+  } catch (error) {
+    console.error('Unable to load admin members.', error);
+    memberList.replaceChildren();
+    const message = document.createElement('p');
+    message.className = 'admin-error';
+    message.textContent = memberErrorMessage(error);
+    memberList.append(message);
+    return;
+  }
+  renderMemberList();
+}
+
+async function addMember(event) {
+  event.preventDefault();
+  if (state.busy || !state.firebase || !state.user) return;
+  if (!memberForm.reportValidity()) return;
+  const values = Object.fromEntries(new FormData(memberForm));
+  const uid = values.uid.trim();
+  if (!/^[^/]{1,128}$/.test(uid)) {
+    setMemberStatus('Paste a valid Firebase User UID.', 'error');
+    return;
+  }
+  state.busy = true;
+  memberForm.querySelector('[data-action="add-member"]').disabled = true;
+  setMemberStatus('Adding member…');
+  try {
+    const { doc, serverTimestamp, setDoc } = state.firebase.firestoreSdk;
+    await withTimeout(setDoc(doc(state.firebase.db, 'admins', uid), {
+      role: 'admin',
+      label: values.label.trim() || null,
+      addedBy: state.user.uid,
+      addedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    }, { merge: true }), 30000, 'save-timeout');
+    memberForm.reset();
+    setMemberStatus('Member added. They can sign in now.', 'success');
+    await loadMembers();
+  } catch (error) {
+    console.error('Unable to add admin member.', error);
+    setMemberStatus(memberErrorMessage(error), 'error');
+  } finally {
+    state.busy = false;
+    memberForm.querySelector('[data-action="add-member"]').disabled = false;
+  }
+}
+
+async function removeMember(uid) {
+  if (state.busy || uid === state.user?.uid) return;
+  const member = state.members.find((item) => item.id === uid);
+  const name = member?.label || member?.email || uid;
+  if (!window.confirm(`Remove ${name} from News Admin? They will lose access immediately.`)) return;
+  state.busy = true;
+  setMemberStatus('Removing member…');
+  try {
+    const { deleteDoc, doc } = state.firebase.firestoreSdk;
+    await withTimeout(deleteDoc(doc(state.firebase.db, 'admins', uid)), 30000, 'save-timeout');
+    setMemberStatus('Member removed.', 'success');
+    await loadMembers();
+  } catch (error) {
+    console.error('Unable to remove admin member.', error);
+    setMemberStatus(memberErrorMessage(error), 'error');
+  } finally {
+    state.busy = false;
+  }
 }
 
 async function loadPosts() {
@@ -417,7 +546,8 @@ async function initialize() {
     onAuthStateChanged(state.firebase.auth, async (user) => {
       state.user = user;
       if (!user) {
-        show(authPanel, true); show(dashboard, false); show(editor, false);
+        show(authPanel, true); show(dashboard, false); show(editor, false); show(membersPanel, false);
+        document.querySelector('[data-action="toggle-members"]').setAttribute('aria-expanded', 'false');
         document.querySelector('[data-action="logout"]').hidden = true;
         setStatus('Sign in to manage team news.');
         return;
@@ -430,7 +560,8 @@ async function initialize() {
           await signOut(state.firebase.auth);
           return;
         }
-        show(authPanel, false); show(dashboard, true); show(editor, false);
+        show(authPanel, false); show(dashboard, true); show(editor, false); show(membersPanel, false);
+        document.querySelector('[data-action="toggle-members"]').setAttribute('aria-expanded', 'false');
         document.querySelector('[data-action="logout"]').hidden = false;
         setStatus(`Signed in as ${user.email || user.displayName || 'authorized admin'}.`, 'success');
         await loadPosts();
@@ -446,6 +577,21 @@ async function initialize() {
 }
 
 document.querySelector('[data-action="new-post"]').addEventListener('click', () => openEditor());
+document.querySelector('[data-action="toggle-members"]').addEventListener('click', async (event) => {
+  const isHidden = membersPanel.hidden;
+  show(membersPanel, isHidden);
+  event.currentTarget.setAttribute('aria-expanded', String(isHidden));
+  if (isHidden) await loadMembers();
+});
+document.querySelector('[data-action="close-members"]').addEventListener('click', () => {
+  show(membersPanel, false);
+  document.querySelector('[data-action="toggle-members"]').setAttribute('aria-expanded', 'false');
+});
+memberForm.addEventListener('submit', addMember);
+memberList.addEventListener('click', (event) => {
+  const uid = event.target.dataset.removeMemberId;
+  if (uid) removeMember(uid);
+});
 document.querySelector('[data-action="close-editor"]').addEventListener('click', closeEditor);
 document.querySelector('[data-action="save-draft"]').addEventListener('click', () => savePost('draft'));
 document.querySelector('[data-action="publish"]').addEventListener('click', () => savePost('published'));

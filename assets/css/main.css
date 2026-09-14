@@ -5833,6 +5833,7 @@ img {
 .admin-dashboard-heading,
 .admin-editor-heading { align-items: center; display: flex; gap: 1rem; justify-content: space-between; margin-bottom: 1.5rem; }
 .admin-dashboard-heading p { margin: 0; }
+.admin-dashboard-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 0.6rem; }
 .admin-post-tools { align-items: center; display: grid; gap: 0.65rem; grid-template-columns: minmax(0, 1fr) 12rem; margin-bottom: 1rem; }
 .admin-post-tools input,
 .admin-post-tools select { background: rgba(24, 12, 45, 0.6); border: 1px solid rgba(255, 216, 77, 0.32); color: #ffffff; margin: 0; }
@@ -5849,6 +5850,14 @@ img {
 .button.danger { border-color: rgba(255, 170, 170, 0.65); color: #ffd0d0; }
 .admin-empty,
 .admin-error { color: rgba(255, 255, 255, 0.9); padding: 1rem 0; }
+.admin-members { margin-top: 1.25rem; }
+.admin-member-form { align-items: end; display: grid; gap: 0.8rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+.admin-member-form .admin-save-status { grid-column: 1 / -1; margin-left: 0; }
+.admin-member-list { display: grid; gap: 0.65rem; margin-top: 1.25rem; }
+.admin-member-row { align-items: center; background: rgba(49, 36, 80, 0.72); border: 1px solid rgba(255, 216, 77, 0.25); border-radius: 0.65rem; display: flex; gap: 1rem; justify-content: space-between; padding: 0.8rem 1rem; }
+.admin-member-details { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+.admin-member-details strong { color: #ffffff; }
+.admin-member-details code { color: rgba(255, 255, 255, 0.68); overflow-wrap: anywhere; }
 .admin-form-grid { display: grid; gap: 1rem 1.25rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .admin-form-wide { grid-column: 1 / -1; }
 .admin-page .field { margin: 0; }
@@ -5879,11 +5888,18 @@ img {
 	.admin-shell { padding-top: 1rem; }
 	.admin-dashboard-heading,
 	.admin-editor-heading { align-items: flex-start; flex-direction: column; }
+	.admin-dashboard-actions { width: 100%; }
+	.admin-dashboard-actions .button { flex: 1; }
 	.admin-post-tools { grid-template-columns: 1fr; }
 	.admin-post-row { align-items: flex-start; flex-direction: column; }
 	.admin-post-actions { justify-content: flex-start; }
 	.admin-form-grid { display: block; }
 	.admin-form-grid .field { margin-bottom: 1rem; }
+	.admin-member-form { display: block; }
+	.admin-member-form .field { margin-bottom: 1rem; }
+	.admin-member-form .button { width: 100%; }
+	.admin-member-row { align-items: flex-start; flex-direction: column; }
+	.admin-member-row .button { width: 100%; }
 	.admin-save-status { flex-basis: 100%; margin-left: 0; }
 }
 

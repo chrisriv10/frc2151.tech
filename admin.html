@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
-  <link rel="stylesheet" href="assets/css/main.css?v=53" />
+  <link rel="stylesheet" href="assets/css/main.css?v=54" />
   <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
 </head>
 <body class="is-preload admin-page">
@@ -28,7 +28,7 @@
     <section class="admin-dashboard" data-dashboard hidden aria-labelledby="dashboard-title">
       <div class="admin-dashboard-heading">
         <div><h2 id="dashboard-title">News Dashboard</h2><p>Manage drafts and published team updates.</p></div>
-        <button type="button" class="button primary" data-action="new-post">New Post</button>
+        <div class="admin-dashboard-actions"><button type="button" class="button" data-action="toggle-members" aria-expanded="false" aria-controls="admin-members">Manage Members</button><button type="button" class="button primary" data-action="new-post">New Post</button></div>
       </div>
       <div class="admin-post-tools">
         <label class="sr-only" for="post-search">Search posts</label>
@@ -41,6 +41,20 @@
         </select>
       </div>
       <div class="admin-post-list" data-post-list aria-live="polite"></div>
+    </section>
+
+    <section id="admin-members" class="admin-panel admin-members" data-members-panel hidden aria-labelledby="members-title">
+      <div class="admin-dashboard-heading">
+        <div><h2 id="members-title">Team admins</h2><p>Add teammates by their Firebase UID. Only authorized admins can manage this list.</p></div>
+        <button type="button" class="button" data-action="close-members">Close</button>
+      </div>
+      <form class="admin-member-form" data-member-form>
+        <div class="field"><label for="member-uid">Member Firebase UID</label><input id="member-uid" name="uid" type="text" inputmode="text" autocomplete="off" required placeholder="Paste the UID from Firebase Authentication"><small>Have the teammate sign in at this page once, then copy their UID from Firebase Authentication → Users.</small></div>
+        <div class="field"><label for="member-label">Name or email (optional)</label><input id="member-label" name="label" type="text" maxlength="160" autocomplete="off" placeholder="For your team’s reference"></div>
+        <button type="submit" class="button primary" data-action="add-member">Add Member</button>
+        <span class="admin-save-status" data-member-status role="status" aria-live="polite"></span>
+      </form>
+      <div class="admin-member-list" data-member-list aria-live="polite"><p class="admin-empty">Loading members…</p></div>
     </section>
 
     <section class="admin-panel admin-editor" data-editor hidden aria-labelledby="editor-title">
@@ -70,6 +84,6 @@
       </form>
     </section>
   </main>
-  <script type="module" src="assets/js/admin.js?v=4"></script>
+  <script type="module" src="assets/js/admin.js?v=5"></script>
 </body>
 </html>

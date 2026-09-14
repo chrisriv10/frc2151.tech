@@ -30,13 +30,15 @@ service cloud.firestore {
         && request.resource.data.imagePaths is list;
     }
 
-    // Admin documents are created manually in the Firebase console or by a
-    // trusted server process. A signed-in admin may only read their own entry.
+    // The first admin is bootstrapped manually in the Firebase console. Once
+    // an admin is authorized, they may manage the allowlist from admin.html.
     match /admins/{uid} {
-      // A signed-in account may check its own allowlist entry. Post access
-      // and all writes still require the isAdmin() check below.
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if false;
+      // Users may check their own entry; admins may load the member list.
+      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      // Only an existing admin can add, edit, or remove another admin. Keep
+      // the current account protected from accidental self-lockout.
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin() && uid != request.auth.uid;
     }
 
     match /posts/{postId} {
