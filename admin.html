@@ -70,10 +70,10 @@
 
         <div class="field admin-body-field"><label for="post-body-editor">Article body</label>
           <div class="markdown-toolbar" role="toolbar" aria-label="Article formatting tools">
-            <button type="button" class="button small" data-command="bold" title="Make selected text bold">Bold</button><button type="button" class="button small" data-command="italic" title="Make selected text italic">Italic</button><button type="button" class="button small" data-command="formatBlock" data-value="h2" title="Format as a heading">Heading</button><button type="button" class="button small" data-command="insertUnorderedList" title="Create a bullet list">Bullets</button><button type="button" class="button small" data-command="insertOrderedList" title="Create a numbered list">Numbered</button><button type="button" class="button small" data-command="formatBlock" data-value="blockquote" title="Format as a quote">Quote</button><button type="button" class="button small" data-action="toggle-preview" aria-pressed="false">Show Preview</button>
+            <button type="button" class="button small" data-command="bold" title="Make selected text bold">Bold</button><button type="button" class="button small" data-command="italic" title="Make selected text italic">Italic</button><button type="button" class="button small" data-command="formatBlock" data-value="h2" title="Format as a heading">Heading</button><button type="button" class="button small" data-command="insertUnorderedList" title="Create a bullet list">Bullets</button><button type="button" class="button small" data-command="insertOrderedList" title="Create a numbered list">Numbered</button><button type="button" class="button small" data-command="formatBlock" data-value="blockquote" title="Format as a quote">Quote</button><button type="button" class="button small" data-action="toggle-preview" aria-pressed="false">Show Preview</button><button type="button" class="button small" data-action="toggle-markdown" aria-pressed="false">Use Markdown</button>
           </div>
           <div id="post-body-editor" class="rich-editor" data-body-editor contenteditable="true" role="textbox" aria-multiline="true" aria-required="true" aria-label="Article body" data-placeholder="Write your team update here…"></div>
-          <textarea id="post-body" name="bodyMarkdown" rows="16" hidden aria-hidden="true"></textarea>
+          <textarea id="post-body" name="bodyMarkdown" rows="16" hidden aria-hidden="true" placeholder="Write Markdown here…"></textarea>
           <div class="admin-editor-preview news-article" data-editor-preview hidden aria-label="Article preview"></div>
         </div>
 
@@ -83,6 +83,6 @@
       </form>
     </section>
   </main>
-  <script type="module" src="assets/js/admin.js?v=7"></script>
+  <script type="module" src="assets/js/admin.js?v=8"></script>
 </body>
 </html>

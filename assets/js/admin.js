@@ -26,7 +26,7 @@ const memberForm = document.querySelector('[data-member-form]');
 const memberList = document.querySelector('[data-member-list]');
 const memberStatus = document.querySelector('[data-member-status]');
 
-const state = { firebase: null, user: null, currentPost: null, posts: [], members: [], busy: false, search: '', filter: 'all', previewUrl: null, bodyImagePreviewUrl: null, editorRange: null, pendingBodyImage: null };
+const state = { firebase: null, user: null, currentPost: null, posts: [], members: [], busy: false, search: '', filter: 'all', previewUrl: null, bodyImagePreviewUrl: null, editorRange: null, pendingBodyImage: null, markdownMode: false };
 const busyControls = document.querySelectorAll('[data-action="save-draft"], [data-action="publish"], [data-action="unpublish"], [data-action="insert-body-image"], #post-cover, #post-body-image, #post-body-image-alt');
 
 function setStatus(message, kind = '') {
@@ -131,6 +131,20 @@ function memberErrorMessage(error) {
 
 function show(element, visible) { element.hidden = !visible; }
 
+function setMarkdownMode(enabled) {
+  if (enabled) syncBodyMarkdown();
+  else loadBodyEditor(form.elements.bodyMarkdown.value);
+  state.markdownMode = enabled;
+  bodyEditor.hidden = enabled;
+  bodyEditor.setAttribute('aria-hidden', String(enabled));
+  form.elements.bodyMarkdown.hidden = !enabled;
+  form.elements.bodyMarkdown.setAttribute('aria-hidden', String(!enabled));
+  document.querySelectorAll('[data-command]').forEach((button) => { button.disabled = enabled; });
+  const toggle = document.querySelector('[data-action="toggle-markdown"]');
+  toggle.setAttribute('aria-pressed', String(enabled));
+  toggle.textContent = enabled ? 'Use Visual Editor' : 'Use Markdown';
+}
+
 function slugify(value) {
   return value.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/[\s-]+/g, '-').replace(/^-|-$/g, '').slice(0, 160) || 'team-update';
 }
@@ -214,6 +228,7 @@ function blockToMarkdown(node) {
 }
 
 function syncBodyMarkdown() {
+  if (state.markdownMode) return;
   form.elements.bodyMarkdown.value = Array.from(bodyEditor.childNodes).map(blockToMarkdown).filter(Boolean).join('\n\n').trim();
 }
 
@@ -249,7 +264,7 @@ function insertImageIntoEditor(url, altText) {
 }
 
 function renderEditorPreview() {
-  syncBodyMarkdown();
+  if (!state.markdownMode) syncBodyMarkdown();
   if (state.previewUrl) {
     URL.revokeObjectURL(state.previewUrl);
     state.previewUrl = null;
@@ -309,6 +324,7 @@ function resetEditor() {
   }
   form.reset();
   form.elements.postId.value = '';
+  setMarkdownMode(false);
   bodyEditor.replaceChildren();
   state.editorRange = null;
   state.pendingBodyImage = null;
@@ -345,7 +361,7 @@ function openEditor(post = null) {
   form.elements.author.value = post.author || '';
   form.elements.excerpt.value = post.excerpt || '';
   form.elements.bodyMarkdown.value = post.bodyMarkdown || '';
-  loadBodyEditor(post.bodyMarkdown || '');
+  setMarkdownMode(false);
   document.querySelector('[data-action="unpublish"]').hidden = post.status !== 'published';
   renderCoverPreview(post.coverImageUrl, null);
   setSaveStatus('');
@@ -741,6 +757,10 @@ document.querySelector('[data-action="toggle-preview"]').addEventListener('click
   preview.hidden = !isHidden;
   event.currentTarget.setAttribute('aria-pressed', String(isHidden));
   event.currentTarget.textContent = isHidden ? 'Hide Preview' : 'Show Preview';
+});
+document.querySelector('[data-action="toggle-markdown"]').addEventListener('click', () => {
+  setMarkdownMode(!state.markdownMode);
+  if (!preview.hidden) renderEditorPreview();
 });
 document.querySelectorAll('[data-command]').forEach((button) => {
   button.addEventListener('mousedown', (event) => event.preventDefault());
