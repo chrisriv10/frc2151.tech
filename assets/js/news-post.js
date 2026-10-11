@@ -1,6 +1,7 @@
 import { getFirebase } from './firebase-config.js';
 import { formatPublishedDate, timestampToDate } from './news.js';
 import { renderMarkdown, safeImageUrl } from './markdown.js';
+import { getStaticPostById } from './news-data.js';
 
 const root = document.querySelector('[data-article-root]');
 
@@ -114,6 +115,11 @@ async function loadArticle() {
   }
 
   try {
+    const staticPost = await getStaticPostById(id);
+    if (staticPost) {
+      renderArticle(staticPost, id);
+      return;
+    }
     const firebase = await getFirebase();
     if (!firebase) {
       state('News is being prepared', 'Published articles will appear here once the news service is configured.');

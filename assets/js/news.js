@@ -1,5 +1,6 @@
 import { getFirebase } from './firebase-config.js';
 import { safeImageUrl } from './markdown.js';
+import { getStaticPosts } from './news-data.js';
 
 const emptyMessage = 'Team news will appear here as updates are published.';
 
@@ -93,25 +94,37 @@ export function createPostCard(post, headingTag = 'h3') {
 }
 
 async function getPublishedPosts(limitCount) {
-  const firebase = await getFirebase();
-  if (!firebase) return [];
-  const { collection, getDocs, limit, orderBy, query, where } = firebase.firestoreSdk;
-  const postsCollection = collection(firebase.db, 'posts');
-  const published = where('status', '==', 'published');
-  let snapshot;
+  const staticPosts = await getStaticPosts();
+  let firebasePosts = [];
   try {
-    const constraints = [published, orderBy('publishedAt', 'desc')];
-    if (limitCount) constraints.push(limit(limitCount));
-    snapshot = await getDocs(query(postsCollection, ...constraints));
+    const firebase = await getFirebase();
+    if (firebase) {
+      const { collection, getDocs, limit, orderBy, query, where } = firebase.firestoreSdk;
+      const postsCollection = collection(firebase.db, 'posts');
+      const published = where('status', '==', 'published');
+      let snapshot;
+      try {
+        const constraints = [published, orderBy('publishedAt', 'desc')];
+        if (limitCount) constraints.push(limit(limitCount));
+        snapshot = await getDocs(query(postsCollection, ...constraints));
+      } catch (error) {
+        // A freshly configured Firebase project may not have the composite index yet.
+        // Retry with the same server-side published filter, then sort the safe result.
+        if (error?.code !== 'failed-precondition') throw error;
+        console.warn('Published-post index is unavailable; using a filtered fallback query.', error);
+        snapshot = await getDocs(query(postsCollection, published));
+      }
+      firebasePosts = snapshot.docs.map(postFromSnapshot);
+    }
   } catch (error) {
-    // A freshly configured Firebase project may not have the composite index yet.
-    // Retry with the same server-side published filter, then sort the safe result
-    // locally so public pages still work while the index is being deployed.
-    if (error?.code !== 'failed-precondition') throw error;
-    console.warn('Published-post index is unavailable; using a filtered fallback query.', error);
-    snapshot = await getDocs(query(postsCollection, published));
+    // Keep repository-published posts available when the optional Firebase service
+    // is unavailable; drafts remain protected by Firestore Rules.
+    console.warn('Unable to load Firebase news; showing repository-published posts.', error);
   }
-  const posts = snapshot.docs.map(postFromSnapshot).sort((a, b) => {
+  // Firestore copies take precedence over static copies with the same slug.
+  const merged = new Map(staticPosts.map((post) => [post.slug || post.id, post]));
+  firebasePosts.forEach((post) => merged.set(post.slug || post.id, post));
+  const posts = Array.from(merged.values()).sort((a, b) => {
     const aTime = timestampToDate(a.publishedAt)?.getTime() || 0;
     const bTime = timestampToDate(b.publishedAt)?.getTime() || 0;
     return bTime - aTime;
