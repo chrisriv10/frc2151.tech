@@ -4552,6 +4552,10 @@ text-transform: uppercase;
     width: 10em;
 }
 
+.sponsor-bar-track .baxter-sponsor-logo {
+    filter: brightness(0) invert(1);
+}
+
 .sponsor-bar-track .sponsor-admin-link {
     border: 0;
     display: block;
