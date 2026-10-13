@@ -26,8 +26,16 @@ function setArticleMetadata(post, id) {
   document.title = `${title} | FRC 2151 Monty Pythons`;
   const description = document.querySelector('meta[name="description"]');
   if (description && post.excerpt) description.content = post.excerpt;
-  const canonical = document.querySelector('link[rel="canonical"]');
-  if (canonical) canonical.href = `https://frc2151.tech/post.html?id=${encodeURIComponent(id)}`;
+  let canonical = document.querySelector('link[rel="canonical"]');
+  if (!canonical) {
+    canonical = document.createElement('link');
+    canonical.rel = 'canonical';
+    document.head.append(canonical);
+  }
+  const articleUrl = `https://frc2151.tech/post.html?id=${encodeURIComponent(id)}`;
+  canonical.href = articleUrl;
+  const ogUrl = document.querySelector('meta[property="og:url"]');
+  if (ogUrl) ogUrl.content = articleUrl;
   const ogTitle = document.querySelector('meta[property="og:title"]');
   if (ogTitle) ogTitle.content = document.title;
   const ogDescription = document.querySelector('meta[property="og:description"]');
