@@ -49,6 +49,7 @@ export function createPostCard(post, headingTag = 'h3') {
   if (coverImageUrl) {
     const image = document.createElement('img');
     image.className = 'news-card-image';
+    if (post.coverImageFit === 'contain') image.classList.add('news-card-image-contain');
     image.src = coverImageUrl;
     image.alt = post.coverImageAlt || `${post.title || 'News'} featured image`;
     image.loading = 'lazy';

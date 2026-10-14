@@ -90,6 +90,7 @@ function renderArticle(post, id) {
   if (cover) {
     const figure = document.createElement('figure');
     figure.className = 'news-article-cover';
+    if (post.coverImageFit === 'contain') figure.classList.add('news-article-cover-contain');
     const image = document.createElement('img');
     image.src = cover;
     image.alt = post.coverImageAlt || `${post.title || 'News'} featured image`;

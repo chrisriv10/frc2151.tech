@@ -5677,6 +5677,12 @@ img {
 	width: 100%;
 }
 
+.news-card-image-contain {
+	background: #ffffff;
+	object-fit: contain;
+	padding: 1.5rem;
+}
+
 .news-card-image + .news-card-content {
 	grid-column: 2;
 }
@@ -5774,6 +5780,21 @@ img {
 	max-height: 34rem;
 	object-fit: cover;
 	width: 100%;
+}
+
+.news-article-cover-contain {
+	background: #ffffff;
+	border: 2px solid #ffd84d;
+	border-radius: 0.75rem;
+	padding: clamp(1rem, 4vw, 2rem);
+}
+
+.news-article-cover-contain img {
+	border: 0;
+	border-radius: 0;
+	height: clamp(5rem, 12vw, 9rem);
+	max-height: none;
+	object-fit: contain;
 }
 
 .news-article-body {

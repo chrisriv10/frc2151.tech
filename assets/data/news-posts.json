@@ -7,6 +7,7 @@
     "excerpt": "We are excited to have Online Metals as a sponsor and grateful for their credit to purchase materials!",
     "coverImageUrl": "assets/css/images/onlinemetals-logo.png",
     "coverImageAlt": "Online Metals logo",
+    "coverImageFit": "contain",
     "coverImagePath": null,
     "bodyMarkdown": "We are excited to welcome Online Metals as a new sponsor of FRC Team 2151!\n\nOnline Metals has provided us with credit to purchase materials for our robotics work. This support will help us turn our ideas into designs, build and test robot mechanisms, and continue learning through hands-on problem-solving. We are grateful for Online Metals' contribution and for helping us prepare for the work ahead as the build season approaches.\n\nThank you, Online Metals, for supporting us and helping us keep building!",
     "status": "published",
