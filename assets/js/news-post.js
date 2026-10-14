@@ -92,7 +92,7 @@ function renderArticle(post, id) {
     figure.className = 'news-article-cover';
     const image = document.createElement('img');
     image.src = cover;
-    image.alt = `${post.title || 'News'} featured image`;
+    image.alt = post.coverImageAlt || `${post.title || 'News'} featured image`;
     image.fetchPriority = 'high';
     figure.append(image);
     article.append(figure);

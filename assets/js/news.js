@@ -50,7 +50,7 @@ export function createPostCard(post, headingTag = 'h3') {
     const image = document.createElement('img');
     image.className = 'news-card-image';
     image.src = coverImageUrl;
-    image.alt = `${post.title || 'News'} featured image`;
+    image.alt = post.coverImageAlt || `${post.title || 'News'} featured image`;
     image.loading = 'lazy';
     image.referrerPolicy = 'no-referrer';
     card.append(image);
@@ -121,9 +121,19 @@ async function getPublishedPosts(limitCount) {
     // is unavailable; drafts remain protected by Firestore Rules.
     console.warn('Unable to load Firebase news; showing repository-published posts.', error);
   }
-  // Firestore copies take precedence over static copies with the same slug.
+  // Firestore remains authoritative, while local static assets can fill in
+  // missing media or excerpt data when Storage is unavailable.
   const merged = new Map(staticPosts.map((post) => [post.slug || post.id, post]));
-  firebasePosts.forEach((post) => merged.set(post.slug || post.id, post));
+  firebasePosts.forEach((post) => {
+    const key = post.slug || post.id;
+    const staticPost = merged.get(key);
+    merged.set(key, {
+      ...staticPost,
+      ...post,
+      coverImageUrl: post.coverImageUrl || staticPost?.coverImageUrl || null,
+      excerpt: post.excerpt || staticPost?.excerpt || ''
+    });
+  });
   const posts = Array.from(merged.values()).sort((a, b) => {
     const aTime = timestampToDate(a.publishedAt)?.getTime() || 0;
     const bTime = timestampToDate(b.publishedAt)?.getTime() || 0;
