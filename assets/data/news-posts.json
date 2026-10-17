@@ -1,5 +1,21 @@
 [
   {
+    "id": "baxter-international-joins-team-2151-as-a-sponsor",
+    "title": "Baxter International Joins Team 2151 as a Sponsor",
+    "slug": "baxter-international-joins-team-2151-as-a-sponsor",
+    "author": "Monty Pythons",
+    "excerpt": "We are grateful to Baxter International for supporting our robotics team through a grant!",
+    "coverImageUrl": "assets/css/images/2151baxter.svg",
+    "coverImageAlt": "Baxter International logo",
+    "coverImageFit": "contain",
+    "coverImagePath": null,
+    "bodyMarkdown": "We are excited to recognize our new sponsor, Baxter International, for supporting FRC Team 2151, the Monty Pythons, through a monetary grant.\n\nThis support helps us purchase materials and continue developing our team. We appreciate Baxter International’s investment in our team and the opportunities it helps make possible.\n\nThank you, Baxter International, for supporting Team 2151 and helping us keep building!",
+    "status": "published",
+    "publishedAt": "2026-10-16T12:00:00-05:00",
+    "createdAt": "2026-10-16T12:00:00-05:00",
+    "updatedAt": "2026-10-16T12:00:00-05:00"
+  },
+  {
     "id": "xGl9jMiGtW9KJvqM6DP9",
     "title": "Online Metals Joins Team 2151 as a Sponsor",
     "slug": "online-metals-joins-team-2151-as-a-sponsor",
