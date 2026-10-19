@@ -4742,10 +4742,6 @@ text-transform: uppercase;
     transition: transform 0.6s ease;
 }
 
-.flip-toggle.flipped svg {
-    transform: rotate(180deg);
-}
-
 .flip-front h2,
 .flip-back h2,
 .flip-third h2 {

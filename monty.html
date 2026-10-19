@@ -26,7 +26,7 @@
 	<meta name="twitter:title" content="Monty Robot | FRC Team 2151" />
 	<meta name="twitter:description" content="Meet Monty, the Monty Pythons’ 2026 competition robot." />
 	<meta name="twitter:image" content="https://frc2151.tech/assets/css/images/Robot.png" />
-	<link rel="stylesheet" href="assets/css/main.css?v=53" />
+	<link rel="stylesheet" href="assets/css/main.css?v=54" />
 	<noscript>
 		<link rel="stylesheet" href="assets/css/noscript.css" />
 	</noscript>
@@ -168,7 +168,6 @@
 			toggle.addEventListener('click', function () {
 				var face = (parseInt(card.getAttribute('data-face'), 10) + 1) % 3;
 				card.setAttribute('data-face', face);
-				toggle.classList.toggle('flipped', face !== 0);
 				toggle.setAttribute('aria-label', [
 					'Show off-season stats',
 					'Show SHOUT event details',
