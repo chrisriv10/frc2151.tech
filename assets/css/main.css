@@ -4564,6 +4564,12 @@ text-transform: uppercase;
     width: 10em;
 }
 
+/* The Online Metals wordmark is black, so give it a light tile in the dark footer marquee. */
+.sponsor-bar-track .online-metals-sponsor-logo {
+    background: #ffffff;
+    border-radius: 0.35em;
+}
+
 .sponsor-bar-track .baxter-sponsor-logo {
     filter: brightness(0) invert(1);
 }
