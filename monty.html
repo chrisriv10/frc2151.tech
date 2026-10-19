@@ -13,7 +13,7 @@
 
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<meta name="description" content="Meet Monty, FRC Team 2151’s 2026 competition robot, and explore the team’s Midwest Regional, Rock River, and upcoming SHOUT event details." />
+	<meta name="description" content="Meet Monty, FRC Team 2151’s 2026 competition robot, and review the Monty Pythons’ 2026 competition results from Midwest Regional, Rock River, and SHOUT." />
 	<link rel="canonical" href="https://frc2151.tech/monty.html" />
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="FRC Team 2151 — Monty Pythons" />
@@ -26,7 +26,7 @@
 	<meta name="twitter:title" content="Monty Robot | FRC Team 2151" />
 	<meta name="twitter:description" content="Meet Monty, the Monty Pythons’ 2026 competition robot." />
 	<meta name="twitter:image" content="https://frc2151.tech/assets/css/images/Robot.png" />
-	<link rel="stylesheet" href="assets/css/main.css?v=53" />
+	<link rel="stylesheet" href="assets/css/main.css?v=54" />
 	<noscript>
 		<link rel="stylesheet" href="assets/css/noscript.css" />
 	</noscript>
@@ -101,9 +101,9 @@
 									<li><strong>Event:</strong> SHOUT Robotics Competition</li>
 									<li><strong>Location:</strong> Milwaukee, Wisconsin</li>
 									<li><strong>Dates:</strong> October 17, 2026</li>
-									<li><strong>Qualification Rank:</strong> TBD</li>
-									<li><strong>Record:</strong> TBD</li>
-									<li><strong>Playoffs:</strong> TBD</li>
+									<li><strong>Qualification Rank:</strong> 25 of 29</li>
+									<li><strong>Record:</strong> 2 wins, 3 losses, 0 ties</li>
+									<li><strong>Playoffs:</strong> Did not participate</li>
 								</ul>
 								<img src="assets/css/images/FRCRebuilt.png" alt="2026 REBUILT season logo" class="rebuilt-logo" loading="lazy" />
 							</div>
@@ -168,7 +168,6 @@
 			toggle.addEventListener('click', function () {
 				var face = (parseInt(card.getAttribute('data-face'), 10) + 1) % 3;
 				card.setAttribute('data-face', face);
-				toggle.classList.toggle('flipped', face !== 0);
 				toggle.setAttribute('aria-label', [
 					'Show off-season stats',
 					'Show SHOUT event details',
