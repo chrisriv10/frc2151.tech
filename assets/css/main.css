@@ -4564,10 +4564,9 @@ text-transform: uppercase;
     width: 10em;
 }
 
-/* The Online Metals wordmark is black, so give it a light tile in the dark footer marquee. */
+/* Invert the dark wordmark for contrast while keeping its blue accent on the dark footer. */
 .sponsor-bar-track .online-metals-sponsor-logo {
-    background: #ffffff;
-    border-radius: 0.35em;
+    filter: invert(1) hue-rotate(180deg);
 }
 
 .sponsor-bar-track .baxter-sponsor-logo {
