@@ -22,7 +22,7 @@
 
 ## Pages
 
-Home (`index.html`) · About (`about.html`) · Robot (`monty.html`) · Sponsors (`sponsors.html`) · News (`news.html`)
+Home (`index.html`) · About (`about.html`) · Robot (`monty.html`) · Sponsors (`sponsors.html`) · News (`news.html`, `post.html?id=...`)
 
 ## Stack
 
