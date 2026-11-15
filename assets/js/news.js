@@ -3,6 +3,11 @@ import { safeImageUrl } from './markdown.js';
 import { getStaticPosts } from './news-data.js';
 
 const emptyMessage = 'Team news will appear here as updates are published.';
+const defaultCategory = 'Team Updates';
+
+function postCategory(post) {
+  return post.category === 'Sponsor News' ? 'Sponsor News' : defaultCategory;
+}
 
 export function timestampToDate(value) {
   if (!value) return null;
@@ -59,6 +64,10 @@ export function createPostCard(post, headingTag = 'h3') {
 
   const content = document.createElement('div');
   content.className = 'news-card-content';
+  const category = document.createElement('span');
+  category.className = 'news-category';
+  category.textContent = postCategory(post);
+  content.append(category);
   const heading = document.createElement(headingTag);
   heading.textContent = post.title || 'Untitled news post';
   content.append(heading);
@@ -159,6 +168,7 @@ export async function loadLatestNews() {
 export async function loadNewsList() {
   const target = document.querySelector('[data-news-list]');
   if (!target) return;
+  const filters = document.querySelector('[data-news-filters]');
   target.replaceChildren(createState('Loading published news…', 'loading'));
   try {
     const posts = await getPublishedPosts();
@@ -166,13 +176,39 @@ export async function loadNewsList() {
       target.replaceChildren(createState('There are no published posts yet. Check back soon!'));
       return;
     }
-    const fragment = document.createDocumentFragment();
-    posts.forEach((post) => fragment.append(createPostCard(post, 'h2')));
-    target.replaceChildren(fragment);
+    if (filters) {
+      filters.hidden = false;
+      filters.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-news-filter]');
+        if (!button || !filters.contains(button)) return;
+        const selected = button.dataset.newsFilter;
+        filters.querySelectorAll('[data-news-filter]').forEach((filterButton) => {
+          const active = filterButton === button;
+          filterButton.classList.toggle('is-active', active);
+          filterButton.setAttribute('aria-pressed', String(active));
+        });
+        renderNewsPosts(target, posts, selected);
+      });
+    }
+    renderNewsPosts(target, posts, 'all');
   } catch (error) {
     console.error('Unable to load published news.', error);
     target.replaceChildren(createState('Please refresh the page or check back soon.', 'error'));
   }
+}
+
+function renderNewsPosts(target, posts, selectedCategory) {
+  const visiblePosts = selectedCategory === 'all'
+    ? posts
+    : posts.filter((post) => postCategory(post) === selectedCategory);
+  if (!visiblePosts.length) {
+    const label = selectedCategory === 'Sponsor News' ? 'sponsor news' : 'team updates';
+    target.replaceChildren(createState(`There are no ${label} posts yet. Check back soon!`));
+    return;
+  }
+  const fragment = document.createDocumentFragment();
+  visiblePosts.forEach((post) => fragment.append(createPostCard(post, 'h2')));
+  target.replaceChildren(fragment);
 }
 
 if (document.querySelector('[data-news-latest]')) loadLatestNews();

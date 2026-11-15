@@ -70,6 +70,10 @@ function renderArticle(post, id) {
   const heading = document.createElement('h1');
   heading.className = 'major';
   heading.textContent = post.title || 'News Article';
+  const category = document.createElement('span');
+  category.className = 'news-category news-article-category';
+  category.textContent = post.category === 'Sponsor News' ? 'Sponsor News' : 'Team Updates';
+  article.append(category);
   article.append(heading);
 
   const meta = document.createElement('p');

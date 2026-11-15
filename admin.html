@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
-  <link rel="stylesheet" href="assets/css/main.css?v=56" />
+  <link rel="stylesheet" href="assets/css/main.css?v=57" />
   <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
 </head>
 <body class="is-preload admin-page">
@@ -64,6 +64,7 @@
           <div class="field"><label for="post-title">Title</label><input id="post-title" name="title" type="text" maxlength="160" required></div>
           <div class="field"><label for="post-slug">URL identifier (optional)</label><input id="post-slug" name="slug" type="text" maxlength="160" pattern="[A-Za-z0-9-]+" required><small>This is generated automatically from the title. You can leave it unchanged.</small></div>
           <div class="field"><label for="post-author">Author</label><input id="post-author" name="author" type="text" maxlength="100" placeholder="Monty Pythons"></div>
+          <div class="field"><label for="post-category">Category</label><select id="post-category" name="category"><option value="Team Updates">Team Updates</option><option value="Sponsor News">Sponsor News</option></select></div>
           <div class="field admin-form-wide"><label for="post-excerpt">Excerpt / short description</label><textarea id="post-excerpt" name="excerpt" rows="3" maxlength="320"></textarea></div>
           <div class="field admin-form-wide"><label for="post-cover">Featured image <span class="optional-label">(optional)</span></label><input id="post-cover" name="coverImage" type="file" accept="image/jpeg,image/png,image/webp,image/gif"><small>Images must be 10 MB or smaller.</small><div class="admin-file-preview" data-cover-preview></div></div>
         </div>
@@ -83,6 +84,6 @@
       </form>
     </section>
   </main>
-  <script type="module" src="assets/js/admin.js?v=8"></script>
+  <script type="module" src="assets/js/admin.js?v=9"></script>
 </body>
 </html>

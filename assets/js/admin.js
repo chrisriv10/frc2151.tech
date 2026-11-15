@@ -273,6 +273,10 @@ function renderEditorPreview() {
   const title = document.createElement('h1');
   title.className = 'major';
   title.textContent = form.elements.title.value.trim() || 'Your post title';
+  const category = document.createElement('span');
+  category.className = 'news-category news-article-category';
+  category.textContent = form.elements.category.value || 'Team Updates';
+  preview.append(category);
   preview.append(title);
 
   const meta = document.createElement('p');
@@ -359,6 +363,7 @@ function openEditor(post = null) {
   form.elements.title.value = post.title || '';
   form.elements.slug.value = post.slug || '';
   form.elements.author.value = post.author || '';
+  form.elements.category.value = post.category === 'Sponsor News' ? 'Sponsor News' : 'Team Updates';
   form.elements.excerpt.value = post.excerpt || '';
   form.elements.bodyMarkdown.value = post.bodyMarkdown || '';
   setMarkdownMode(false);
@@ -612,7 +617,7 @@ async function savePost(desiredStatus) {
       if (!imagePaths.includes(coverImagePath)) imagePaths.push(coverImagePath);
     }
     const payload = {
-      title, slug: (values.slug.trim() || slugify(title)), author: values.author.trim(), excerpt: values.excerpt.trim(), bodyMarkdown,
+      title, slug: (values.slug.trim() || slugify(title)), author: values.author.trim(), category: values.category, excerpt: values.excerpt.trim(), bodyMarkdown,
       coverImageUrl, coverImagePath, imagePaths, status: desiredStatus,
       updatedAt: serverTimestamp(), updatedBy: state.user.uid,
       createdBy: previous.createdBy || state.user.uid,

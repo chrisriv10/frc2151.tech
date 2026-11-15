@@ -18,7 +18,7 @@
   <meta name="twitter:title" content="News | FRC 2151 Monty Pythons" />
   <meta name="twitter:description" content="Latest news from the FRC Team 2151 Monty Pythons." />
   <meta name="twitter:image" content="https://frc2151.tech/assets/css/images/2151Logo.png" />
-  <link rel="stylesheet" href="assets/css/main.css?v=55" />
+  <link rel="stylesheet" href="assets/css/main.css?v=56" />
   <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
 </head>
 <body class="is-preload">
@@ -46,6 +46,11 @@
       <div class="inner">
         <h1 class="major">News</h1>
         <p class="news-page-intro">Build updates, competition recaps, and stories from the Monty Pythons.</p>
+        <div class="news-filters" data-news-filters role="group" aria-label="Filter news by category" hidden>
+          <button class="button small is-active" type="button" data-news-filter="all" aria-pressed="true">All News</button>
+          <button class="button small" type="button" data-news-filter="Team Updates" aria-pressed="false">Team Updates</button>
+          <button class="button small" type="button" data-news-filter="Sponsor News" aria-pressed="false">Sponsor News</button>
+        </div>
         <div class="news-list" data-news-list aria-live="polite">
           <div class="news-state news-state-loading"><span class="loader" aria-hidden="true"></span><p>Loading published news…</p></div>
         </div>
@@ -73,6 +78,6 @@
   </div></div>
 
   <script src="assets/js/jquery.min.js"></script><script src="assets/js/jquery.scrollex.min.js"></script><script src="assets/js/jquery.scrolly.min.js"></script><script src="assets/js/browser.min.js"></script><script src="assets/js/breakpoints.min.js"></script><script src="assets/js/util.js"></script><script src="assets/js/main.js?v=8"></script>
-  <script type="module" src="assets/js/news.js?v=3"></script>
+  <script type="module" src="assets/js/news.js?v=4"></script>
 </body>
 </html>
