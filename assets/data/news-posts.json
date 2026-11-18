@@ -1,5 +1,22 @@
 [
   {
+    "id": "fastenal-joins-team-2151-as-a-sponsor",
+    "title": "Fastenal Joins Team 2151 as a Sponsor",
+    "slug": "fastenal-joins-team-2151-as-a-sponsor",
+    "author": "Monty Pythons",
+    "category": "Sponsor News",
+    "excerpt": "We are grateful to Fastenal for supporting FRC Team 2151 as we prepare for the season ahead!",
+    "coverImageUrl": "assets/css/images/fastenal-logo.svg",
+    "coverImageAlt": "Fastenal logo",
+    "coverImageFit": "contain",
+    "coverImagePath": null,
+    "bodyMarkdown": "We are grateful to welcome Fastenal as a supporter of FRC Team 2151, the Monty Pythons!\n\nFastenal's support helps us continue our robotics work and prepare for the season ahead. We appreciate their support of our team and hands-on STEM learning.\n\nThank you, Fastenal, for supporting Team 2151 and helping us keep building!",
+    "status": "published",
+    "publishedAt": "2026-11-17T12:00:00-06:00",
+    "createdAt": "2026-11-17T12:00:00-06:00",
+    "updatedAt": "2026-11-17T12:00:00-06:00"
+  },
+  {
     "id": "chicago-white-metal-casting-supports-team-2151",
     "title": "Chicago White Metal Casting Supports Team 2151",
     "slug": "chicago-white-metal-casting-supports-team-2151",
